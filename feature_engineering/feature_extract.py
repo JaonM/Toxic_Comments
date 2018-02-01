@@ -253,7 +253,7 @@ if __name__ == '__main__':
     # train_feats.to_csv('../input/train_features.csv', index=False, encoding='utf-8')
 
     # test_feats = pd.DataFrame()
-    # test_feats['id'] = df_train['id']
+    # test_feats['id'] = df_test['id']
     # test_feats['word_count'] = df_test_clean['comment_text'].apply(lambda x: word_count(x))
     # test_feats['unique_count'] = df_test_clean['comment_text'].apply(lambda x: unique_word_count(x))
     # test_feats['sentiment'] = df_test_clean['comment_text'].apply(lambda x: sentiment(x))
