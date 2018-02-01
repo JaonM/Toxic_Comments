@@ -12,6 +12,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from textblob import TextBlob
 import re
 from nltk.corpus import stopwords
+from gensim.corpora import Dictionary
+from gensim.models import LdaModel
+import os
 
 
 def tfidf_corpus():
@@ -141,16 +144,94 @@ def adjective_count(comment):
     return count
 
 
+def __create_dictionary():
+    df_train = pd.read_csv('../input/train_clean.csv')
+    df_test = pd.read_csv('../input/test_clean.csv')
+    df_corpus = pd.concat((df_train, df_test), axis=0)
+    corpus = list()
+    for text in df_corpus['comment_text']:
+        corpus.append(text.split())
+    dictionary = Dictionary(corpus)
+    corpus = [dictionary.doc2bow(text) for text in corpus]
+    return dictionary, corpus
+
+
+def __lda_topic(n_topic=2):
+    """
+    lda topic model features
+    :param n_topic: number of topic
+    :return:
+    """
+    dictionary, corpus = __create_dictionary()
+    lda = LdaModel(corpus=corpus, id2word=dictionary, num_topics=n_topic, iterations=1)
+    print(lda[corpus[7]])
+    lda.save('lda.mod')
+    return lda, dictionary
+
+
+def __get_topic_features(lda, text, dictionary, index):
+    """
+
+    :param lda:  lda model
+    :param text:  comment text
+    :param dictionary:  word dictionary
+    :param index:
+    :return: the probability of relative topic
+    """
+    try:
+        return lda.get_document_topics(dictionary.doc2bow(text.split()))[index][1]
+    except IndexError:
+        return 0
+
+
+def generate_topic_features(n_topic=2):
+    if os.path.exists('lda.mod'):
+        lda = LdaModel.load('lda.mod')
+        dictionary, corpus = __create_dictionary()
+    else:
+        lda, dictionary = __lda_topic(n_topic)
+    df_train = pd.read_csv('../input/train_clean.csv')
+    df_test = pd.read_csv('../input/test_clean.csv')
+
+    train_topic_feats = pd.DataFrame()
+    train_topic_feats['id'] = df_train['id']
+    for i in range(n_topic):
+        train_topic_feats['topic ' + str(i)] = df_train['comment_text'].apply(
+            lambda x: __get_topic_features(lda, x, dictionary, i))
+        # print(df_train['comment_text'].apply(lambda x: lda[dictionary.doc2bow(x.split())][i][1]))
+        # for text in df_train['comment_text']:
+        #     print(text)
+        #     print(lda.get_document_topics(dictionary.doc2bow(text.split())))
+        #     print(lda.get_document_topics(dictionary.doc2bow(text.split()))[i][1])
+        # print(__get_topic_features(lda, text, dictionary, i))
+    df_train_feats = pd.read_csv('../input/train_features.csv')
+
+    df_train_feats = pd.merge(df_train_feats, train_topic_feats, how='inner', on='id')
+    df_train_feats.to_csv('../input/train_features.csv', index=False, encoding='utf-8')
+
+    test_topic_feats = pd.DataFrame()
+    test_topic_feats['id'] = df_test['id']
+    for i in range(n_topic):
+        test_topic_feats['topic ' + str(i)] = df_test['comment_text'].apply(
+            lambda x: __get_topic_features(lda, x, dictionary, i))
+    df_test_feats = pd.read_csv('../input/test_features.csv')
+    df_test_feats = pd.merge(df_test_feats, test_topic_feats, how='inner', on='id')
+    df_test_feats.to_csv('../input/test_features.csv', index=False, encoding='utf-8')
+
+
 # print(adjective_count('i love this world which was beloved by all the people here'))
 
 if __name__ == '__main__':
+    """
+        have run
+    
     df_train = pd.read_csv('../input/train.csv')
     df_test = pd.read_csv('../input/test.csv')
 
     df_train_clean = pd.read_csv('../input/train_clean.csv')
     df_test_clean = pd.read_csv('../input/test_clean.csv')
 
-    # tfidf_feats = tfidf_corpus()
+    tfidf_feats = tfidf_corpus()
     train_feats = pd.DataFrame()
     train_feats['id'] = df_train['id']
     train_feats['word_count'] = df_train_clean['comment_text'].apply(lambda x: word_count(x))
@@ -185,3 +266,7 @@ if __name__ == '__main__':
     test_feats['verb_count'] = df_test_clean['comment_text'].apply(lambda x: verb_count(x))
     test_feats['adjective_count'] = df_test_clean['comment_text'].apply(lambda x: adjective_count(x))
     test_feats.to_csv('../input/test_features.csv', index=False, encoding='utf-8')
+
+    __lda_topic()
+    """
+    generate_topic_features(2)
