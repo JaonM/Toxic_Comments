@@ -163,13 +163,8 @@ def __lda_topic(n_topic=2):
     :return:
     """
     dictionary, corpus = __create_dictionary()
-<<<<<<< HEAD
     lda = LdaModel(corpus=corpus, id2word=dictionary, num_topics=n_topic, iterations=1)
     # print(lda[corpus[7]])
-=======
-    lda = LdaModel(corpus=corpus, id2word=dictionary, num_topics=n_topic, iterations=100)
-    print(lda[corpus[7]])
->>>>>>> d7ce5be4d18798d8b832f3327455361fcbbb8573
     lda.save('lda.mod')
     return lda, dictionary
 
