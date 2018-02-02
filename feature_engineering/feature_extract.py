@@ -24,8 +24,22 @@ def tfidf_corpus():
     df_corpus['comment_text'].apply(lambda x: clean(x))
     tfidfVec = TfidfVectorizer(
         strip_accents='unicode',
-        max_features=100000,
+        max_features=30000,
         ngram_range=(1, 1),
+        analyzer='word',
+    )
+    return tfidfVec.fit_transform(df_corpus['comment_text'])
+
+
+def tfidf_corpus_bigram():
+    df_train = pd.read_csv('../input/train_clean.csv')
+    df_test = pd.read_csv('../input/train_test.csv')
+    df_corpus = pd.concat((df_train, df_test), axis=0)
+    df_corpus['comment_text'].apply(lambda x: clean(x))
+    tfidfVec = TfidfVectorizer(
+        strip_accents='unicode',
+        max_features=30000,
+        ngram_range=(2, 2),
         analyzer='word',
     )
     return tfidfVec.fit_transform(df_corpus['comment_text'])
