@@ -57,7 +57,7 @@ def train_cv(df_train, label):
         'C': np.arange(0.6, 1.5, 0.1),
         'solver': ('liblinear', 'sag', 'saga', 'newton-cg', 'lbfgs'),
         # 'solver':('liblinear','saga'),
-        'max_iter': range(1500, 2000, 100)
+        'max_iter': range(3000, 4000, 100)
     }
     clf = GridSearchCV(estimator=lr, param_grid=params, scoring='roc_auc', cv=5, verbose=1)
     clf.fit(X_train, y_train)
