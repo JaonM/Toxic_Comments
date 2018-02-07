@@ -7,6 +7,8 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 import numpy as np
 from feature_engineering.feature_extract import train_tfidf_unigram_features
+from feature_engineering.feature_extract import train_tfidf_char_features
+from feature_engineering.feature_extract import train_tfidf_bigram_features
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from scipy.sparse import hstack
@@ -40,10 +42,12 @@ def train_cv(df_train, label):
 
     '''feature composition'''
     df_handcraft_train = pd.read_csv('../input/train_features.csv', encoding='utf-8')[features].as_matrix()
-    df_tfidf_train = train_tfidf_unigram_features()
+    tfidf_train = train_tfidf_unigram_features()
+    tfidf_bigram_train = train_tfidf_bigram_features()
+    tfidf_char_train = train_tfidf_char_features()
     print(df_handcraft_train.shape)
-    print(df_tfidf_train.shape)
-    X_train = train_features_merge(df_handcraft_train, df_tfidf_train)
+    print(tfidf_train.shape)
+    X_train = train_features_merge(df_handcraft_train, tfidf_train, tfidf_bigram_train, tfidf_char_train)
     # X_train = np.concatenate((df_handcraft_train,df_tfidf_train),axis=1)
     # df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
     y_train = df_train[label]

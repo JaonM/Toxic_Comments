@@ -24,7 +24,7 @@ def tfidf_corpus_unigram():
     df_corpus['comment_text'].apply(lambda x: clean(x))
     tfidfVec = TfidfVectorizer(
         strip_accents='unicode',
-        max_features=30000,
+        max_features=10000,
         ngram_range=(1, 1),
         analyzer='word',
     )
@@ -38,23 +38,48 @@ def tfidf_corpus_bigram():
     df_corpus['comment_text'].apply(lambda x: clean(x))
     tfidfVec = TfidfVectorizer(
         strip_accents='unicode',
-        max_features=30000,
+        max_features=10000,
         ngram_range=(2, 2),
         analyzer='word',
     )
     return tfidfVec.fit_transform(df_corpus['comment_text'])
 
 
+def tfidf_corpus_char():
+    df_train = pd.read_csv('../input/train_clean.csv')
+    df_test = pd.read_csv('../input/test_clean.csv')
+    df_corpus = pd.concat((df_train, df_test), axis=0)
+    df_corpus['comment_text'].apply(lambda x: clean(x))
+    tfidfVec = TfidfVectorizer(
+        strip_accents='unicode',
+        max_features=10000,
+        ngram_range=(1, 5),
+        analyzer='char',
+    )
+    return tfidfVec.fit_transform(df_corpus['comment_text'])
+
+
+def train_tfidf_char_features():
+    df_train = pd.read_csv('../input/train_clean.csv')
+    tfidf = train_tfidf_char_features()
+    return tfidf[:df_train.shape[0], :]
+
+
+def test_tfidf_char_features():
+    df_train = pd.read_csv('../input/train_clean.csv')
+    return tfidf_corpus_bigram()[df_train.shape[0]:, :]
+
+
 def train_tfidf_unigram_features():
     df_train = pd.read_csv('../input/train_clean.csv')
     tfidf = tfidf_corpus_unigram()
-    return tfidf[:df_train.shape[0]]
+    return tfidf[:df_train.shape[0], :]
 
 
 def train_tfidf_bigram_features():
     df_train = pd.read_csv('../input/train_clean.csv')
     tfidf = tfidf_corpus_bigram()
-    return tfidf[:df_train.shape[0]]
+    return tfidf[:df_train.shape[0], :]
 
 
 def test_tfidf_unigram_features():
