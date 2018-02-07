@@ -34,7 +34,7 @@ def train_cv(df_train, label):
     :return: lr model with special parameters
     """
     # label_weight = df_train.shape[0]/df_train[df_train[label]==1].shape[0]
-    lr = LogisticRegression(class_weight='balanced', solver='sag')
+    lr = LogisticRegression(class_weight='balanced', solver='sag0', random_state=22, verbose=1)
     # lr.set_params(class_weight={label:label_weight})
     # lr.set_params(class_weight='balanced')
 
@@ -49,13 +49,13 @@ def train_cv(df_train, label):
     y_train = df_train[label]
 
     params = {
-        'penalty': ('l1', 'l2'),
+        # 'penalty': ('l1', 'l2'),
         'C': np.arange(0.6, 1.5, 0.1),
-        # 'solver': ('liblinear', 'sag', 'saga', 'newton-cg', 'lbfgs'),
-        'solver':('liblinear','saga'),
-        'max_iter': range(500, 1000, 50)
+        'solver': ('liblinear', 'sag', 'saga', 'newton-cg', 'lbfgs'),
+        # 'solver':('liblinear','saga'),
+        'max_iter': range(1500, 2000, 100)
     }
-    clf = GridSearchCV(estimator=lr, param_grid=params, scoring='roc_auc', cv=5)
+    clf = GridSearchCV(estimator=lr, param_grid=params, scoring='roc_auc', cv=5, verbose=1)
     clf.fit(X_train, y_train)
     return clf
 
