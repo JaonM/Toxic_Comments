@@ -36,7 +36,7 @@ def train_cv(df_train, label):
     :return: lr model with special parameters
     """
     # label_weight = df_train.shape[0]/df_train[df_train[label]==1].shape[0]
-    lr = LogisticRegression(class_weight='balanced', solver='sag0', random_state=22, verbose=1)
+    lr = LogisticRegression(class_weight='balanced', solver='sag0', random_state=22, verbose=1, max_iter=6000)
     # lr.set_params(class_weight={label:label_weight})
     # lr.set_params(class_weight='balanced')
 
@@ -44,21 +44,23 @@ def train_cv(df_train, label):
     df_handcraft_train = pd.read_csv('../input/train_features.csv', encoding='utf-8')[features].as_matrix()
     tfidf_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
-    tfidf_char_train = train_tfidf_char_features()
+    # tfidf_char_train = train_tfidf_char_features()
     print(df_handcraft_train.shape)
     print(tfidf_train.shape)
-    X_train = train_features_merge(df_handcraft_train, tfidf_train, tfidf_bigram_train, tfidf_char_train)
+    X_train = train_features_merge(df_handcraft_train, tfidf_train, tfidf_bigram_train)
     # X_train = np.concatenate((df_handcraft_train,df_tfidf_train),axis=1)
     # df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
     y_train = df_train[label]
 
     params = {
         # 'penalty': ('l1', 'l2'),
-        'C': np.arange(0.6, 1.5, 0.1),
+        'C': np.arange(0.6, 2, 0.1),
         'solver': ('liblinear', 'sag', 'saga', 'newton-cg', 'lbfgs'),
         # 'solver':('liblinear','saga'),
-        'max_iter': range(3000, 4000, 100)
+        'max_iter': range(6000, 7000, 100)
+
     }
+
     clf = GridSearchCV(estimator=lr, param_grid=params, scoring='roc_auc', cv=5, verbose=1)
     clf.fit(X_train, y_train)
     return clf
