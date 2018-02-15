@@ -16,6 +16,7 @@ from baseline.resample import smote_tomek_oversampling
 from sklearn.metrics import roc_auc_score
 from feature_engineering.feature_extract import test_tfidf_bigram_features
 from feature_engineering.feature_extract import test_tfidf_unigram_features
+from sklearn.feature_selection import SelectFromModel
 
 """ 
     features component:
@@ -100,8 +101,12 @@ def train(label):
     '''resample the data set'''
     X_train_resampled, y_train_resampled = resample(X_train, y_train)
 
+    '''feature selection'''
+    model = SelectFromModel(estimator=clf)
+    X_train_resampled = model.transform(X_train_resampled)
+
     '''train test split'''
-    X_train, y_train, X_valid, y_valid = train_test_split(test_size=0.2, random_state=2)
+    X_train, y_train, X_valid, y_valid = train_test_split(X_train_resampled,y_train_resampled,test_size=0.2, random_state=2)
     clf.fit(X_train, y_train)
     y_predict = clf.predict(X_valid)
     print(label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
