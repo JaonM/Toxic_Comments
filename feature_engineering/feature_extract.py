@@ -84,7 +84,7 @@ def train_tfidf_bigram_features():
 
 def test_tfidf_unigram_features():
     df_train = pd.read_csv('../input/train_clean.csv')
-    return tfidf_corpus_unigram()[:df_train.shape[0], :]
+    return tfidf_corpus_unigram()[df_train.shape[0]:, :]
 
 
 def test_tfidf_bigram_features():
