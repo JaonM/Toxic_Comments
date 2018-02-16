@@ -88,7 +88,7 @@ def train(label):
     X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
     y_train = df_train['label']
 
-    '''resample the data set'''
+    '''re-sample the data set'''
     X_train_resampled, y_train_resampled = resample(X_train, y_train)
 
     '''feature selection'''

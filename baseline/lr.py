@@ -33,28 +33,29 @@ def features_merge(*X):
     return hstack((X))
 
 
-def train_cv(target):
+def train_cv(label):
     """
     gird search to tune hypeparameters
-    :param target: target label list
+    :param label: target label
     :return: lr model with special parameters
     """
     # label_weight = df_train.shape[0]/df_train[df_train[label]==1].shape[0]
-    lr = LogisticRegression(class_weight='balanced', solver='sag0', random_state=22, verbose=1, max_iter=6000)
+    lr = LogisticRegression(class_weight='balanced', solver='sag', random_state=22, verbose=1, max_iter=6000)
     # lr.set_params(class_weight={label:label_weight})
     # lr.set_params(class_weight='balanced')
 
+    df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
     '''feature composition'''
     df_handcraft_train = pd.read_csv('../input/train_features.csv', encoding='utf-8')[features].as_matrix()
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
     # tfidf_char_train = train_tfidf_char_features()
     print(df_handcraft_train.shape)
-    print(tfidf_train.shape)
+    # print(tfidf_train.shape)
     X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
     # X_train = np.concatenate((df_handcraft_train,df_tfidf_train),axis=1)
     # df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
-    y_train = target
+    y_train = df_train[label]
 
     params = {
         # 'penalty': ('l1', 'l2'),
@@ -70,7 +71,6 @@ def train_cv(target):
     return clf
 
 
-# def predict
 def resample(X, y):
     """
     resample data set to solve imbalance problem
@@ -95,7 +95,7 @@ def train(label):
     df_handcraft_train = pd.read_csv('../input/train_features.csv', encoding='utf-8')[features].as_matrix()
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
-    X_train = train_features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
+    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
     y_train = df_train['label']
 
     '''resample the data set'''
@@ -106,7 +106,8 @@ def train(label):
     X_train_resampled = model.transform(X_train_resampled)
 
     '''train test split'''
-    X_train, y_train, X_valid, y_valid = train_test_split(X_train_resampled,y_train_resampled,test_size=0.2, random_state=2)
+    X_train, y_train, X_valid, y_valid = train_test_split(X_train_resampled, y_train_resampled, test_size=0.2,
+                                                          random_state=2)
     clf.fit(X_train, y_train)
     y_predict = clf.predict(X_valid)
     print(label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
@@ -145,7 +146,7 @@ if __name__ == '__main__':
 
     df_test = pd.read_csv('../input/test.csv', encoding='utf-8')
     df_predict = pd.DataFrame()
-    df['id'] = df_test['id']
+    df_predict['id'] = df_test['id']
     for label in labels:
         clf = train(label)
         df_predict = predict(df_predict, clf, label)
