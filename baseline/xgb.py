@@ -59,7 +59,7 @@ def train_cv(label):
         'n_estimators': range(1000, 4000, 100),
         'max_depth': range(6, 12, 1),
         'colsample_bytree': np.arange(0.6, 1, 0.1),
-        'colsample_bylevel': np.arange(0, 6, 1.0, 0.1)
+        'colsample_bylevel': np.arange(0.6, 1.0, 0.1)
     }
 
     grid_clf = GridSearchCV(estimator=clf, param_grid=grid_params, verbose=1, scoring='roc_auc', cv=5)
@@ -103,7 +103,7 @@ def train(label):
     '''train test split'''
     X_train, y_train, X_valid, y_valid = train_test_split(X_train_resampled, y_train_resampled, test_size=0.2,
                                                           random_state=2)
-    clf.fit(X_train, y_train)
+    clf.fit(X_train, y_train, eval_metric='auc', eval_set=(X_valid, y_valid), early_stopping_rounds=20)
     y_predict = clf.predict(X_valid)
     print(label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
 
