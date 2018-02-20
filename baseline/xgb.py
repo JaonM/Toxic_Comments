@@ -107,7 +107,7 @@ def train(label):
     y_predict = clf.predict(X_valid)
     print(label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
 
-    clf.fit(X_train_resampled, y_train_resampled)
+    # clf.fit(X_train_resampled, y_train_resampled)
     return clf
 
 
@@ -129,7 +129,7 @@ def predict(df_predict, clf, label):
     '''predict label'''
     target = clf.predict(X_test)
     df_predict[label] = target
-    return predict
+    return df_predict
 
 
 if __name__ == '__main__':

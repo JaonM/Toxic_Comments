@@ -124,7 +124,7 @@ def predict(df_predict, clf, label):
     '''predict label'''
     target = clf.predict(X_test)
     df_predict[label] = target
-    return predict
+    return df_predict
 
 
 if __name__ == '__main__':
