@@ -61,13 +61,13 @@ def tfidf_corpus_char():
 
 def train_tfidf_char_features():
     df_train = pd.read_csv('../input/train_clean.csv')
-    tfidf = train_tfidf_char_features()
+    tfidf = tfidf_corpus_char()
     return tfidf[:df_train.shape[0], :]
 
 
 def test_tfidf_char_features():
     df_train = pd.read_csv('../input/train_clean.csv')
-    return tfidf_corpus_bigram()[df_train.shape[0]:, :]
+    return tfidf_corpus_char()[df_train.shape[0]:, :]
 
 
 def train_tfidf_unigram_features():

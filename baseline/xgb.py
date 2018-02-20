@@ -44,7 +44,7 @@ def train_cv(label):
     clf = XGBClassifier(learning_rate=0.1,
                         n_estimators=1000,
                         max_depth=8,
-                        silent=False,
+                        silent=True,
                         objective='binary:logistic')
 
     # feature composition
@@ -67,7 +67,7 @@ def train_cv(label):
 
     X_train, y_train, X_valid, y_valid = train_test_split(X_train_resampled, y_train_resampled, test_size=0.2,
                                                           random_state=2)
-
+    print('grid search construct')
     grid_clf = GridSearchCV(estimator=clf, param_grid=grid_params, verbose=1, scoring='roc_auc', cv=5)
     grid_clf.fit(X_train, y_train, eval_metrics='auc', eval_set=(X_valid, y_valid), early_stopping_rounds=20)
     return grid_clf
@@ -89,7 +89,7 @@ def train(label):
     clf = XGBClassifier(learning_rate=0.1,
                         n_estimators=1000,
                         max_depth=8,
-                        silent=False,
+                        silent=True,
                         objective='binary:logistic')
 
     '''feature composition'''
