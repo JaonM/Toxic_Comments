@@ -51,7 +51,7 @@ def train_cv(label):
     df_handcraft_train = pd.read_csv('../input/train_features.csv')[features]
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
-    X_train = hstack(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
+    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
     y_train = df_train[label]
 
     grid_params = {
@@ -134,10 +134,14 @@ def predict(df_predict, clf, label):
 
 if __name__ == '__main__':
     '''predict and submit'''
-    submission = pd.DataFrame()
-    df_test = pd.read_csv('../input/test.csv', encoding='utf-8')
-    submission['id'] = df_test['id']
-    for label in labels:
-        clf = train(label)
-        submission = predict(submission, clf, label)
-    submission.to_csv('../submission/xgb_submission.csv', encoding='utf-8', index=False)
+    # submission = pd.DataFrame()
+    # df_test = pd.read_csv('../input/test.csv', encoding='utf-8')
+    # submission['id'] = df_test['id']
+    # for label in labels:
+    #     clf = train(label)
+    #     submission = predict(submission, clf, label)
+    # submission.to_csv('../submission/xgb_submission.csv', encoding='utf-8', index=False)
+
+    '''fine tune parameters'''
+    grid_search = train_cv('toxic')
+    print(grid_search.best_params_)
