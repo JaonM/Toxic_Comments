@@ -108,7 +108,7 @@ def train(label):
     X_train_resampled = model.transform(X_train_resampled)
 
     '''train test split'''
-    X_train, y_train, X_valid, y_valid = train_test_split(X_train_resampled, y_train_resampled, test_size=0.2,
+    X_train, X_valid, y_train, y_valid = train_test_split(X_train_resampled, y_train_resampled, test_size=0.2,
                                                           random_state=2)
     clf.fit(X_train, y_train)
     y_predict = clf.predict(X_valid)
