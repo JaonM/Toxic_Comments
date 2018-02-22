@@ -8,12 +8,14 @@ import pandas as pd
 import numpy as np
 from feature_engineering.feature_extract import train_tfidf_unigram_features
 from feature_engineering.feature_extract import train_tfidf_bigram_features
+from feature_engineering.feature_extract import train_tfidf_char_features
 from scipy.sparse import hstack
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
 from feature_engineering.feature_extract import test_tfidf_bigram_features
 from feature_engineering.feature_extract import test_tfidf_unigram_features
+from feature_engineering.feature_extract import test_tfidf_char_features
 from sklearn.feature_selection import SelectFromModel
 from baseline.resample import smote_tomek_oversampling
 
@@ -51,7 +53,8 @@ def train_cv(label):
     df_handcraft_train = pd.read_csv('../input/train_features.csv')[features]
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
-    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
+    tfidf_char_train = train_tfidf_char_features()
+    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
     y_train = df_train[label]
 
     grid_params = {
@@ -62,14 +65,14 @@ def train_cv(label):
         'colsample_bylevel': np.arange(0.6, 1.0, 0.1)
     }
 
-    '''resample the data set'''
-    X_train_resampled, y_train_resampled = resample(X_train, y_train)
+    # '''resample the data set'''
+    # X_train_resampled, y_train_resampled = resample(X_train, y_train)
 
-    X_train, y_train, X_valid, y_valid = train_test_split(X_train_resampled, y_train_resampled, test_size=0.2,
+    X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.2,
                                                           random_state=2)
     print('grid search construct')
     grid_clf = GridSearchCV(estimator=clf, param_grid=grid_params, verbose=1, scoring='roc_auc', cv=5)
-    grid_clf.fit(X_train, y_train, eval_metrics='auc', eval_set=(X_valid, y_valid), early_stopping_rounds=20)
+    grid_clf.fit(X=X_train, y=y_train, eval_metric='auc', eval_set=[(X_valid, y_valid)], early_stopping_rounds=20)
     return grid_clf
 
 
@@ -107,9 +110,9 @@ def train(label):
     X_train_resampled = model.transform(X_train_resampled)
 
     '''train test split'''
-    X_train, y_train, X_valid, y_valid = train_test_split(X_train_resampled, y_train_resampled, test_size=0.2,
+    X_train, X_valid, y_train, y_valid = train_test_split(X_train_resampled, y_train_resampled, test_size=0.2,
                                                           random_state=2)
-    clf.fit(X_train, y_train, eval_metric='auc', eval_set=(X_valid, y_valid), early_stopping_rounds=20)
+    clf.fit(X_train, y_train, eval_metric='auc', eval_set=list(zip((X_valid, y_valid))), early_stopping_rounds=20)
     y_predict = clf.predict(X_valid)
     print(label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
 
@@ -130,7 +133,8 @@ def predict(df_predict, clf, label):
     df_handcraft_test = pd.read_csv('../input//test_features.csv', encoding='utf-8')[features]
     tfidf_unigram_test = test_tfidf_unigram_features()
     tfidf_bigram_test = test_tfidf_bigram_features()
-    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test)
+    tfidf_char_test = test_tfidf_char_features()
+    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test, tfidf_char_test)
 
     '''predict label'''
     target = clf.predict(X_test)
