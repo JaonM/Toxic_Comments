@@ -16,6 +16,7 @@ from baseline.resample import smote_tomek_oversampling
 from sklearn.metrics import roc_auc_score
 from feature_engineering.feature_extract import test_tfidf_bigram_features
 from feature_engineering.feature_extract import test_tfidf_unigram_features
+from feature_engineering.feature_extract import test_tfidf_char_features
 from sklearn.feature_selection import SelectFromModel
 
 """ 
@@ -59,7 +60,8 @@ def train_cv(label):
     df_handcraft_train = pd.read_csv('../input/train_features.csv')[features]
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
-    X_train = hstack(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
+    tfidf_char_train = train_tfidf_char_features()
+    X_train = hstack((df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train,tfidf_char_train))
     y_train = df_train[label]
 
     grid_params = {
@@ -67,8 +69,11 @@ def train_cv(label):
         'kernel': ('linear', 'rbf', 'poly', 'sigmoid'),
     }
 
+    '''re-sample the data set'''
+    X_train_resampled, y_train_resampled = resample(X_train, y_train)
+
     grid_clf = GridSearchCV(estimator=clf, param_grid=grid_params, verbose=1, scoring='roc_auc', cv=5)
-    grid_clf.fit(X_train, y_train)
+    grid_clf.fit(X_train_resampled, y_train_resampled)
     return grid_clf
 
 
@@ -85,7 +90,8 @@ def train(label):
     df_handcraft_train = pd.read_csv('../input/train_features.csv', encoding='utf-8')[features].as_matrix()
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
-    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
+    tfidf_char_train = train_tfidf_char_features()
+    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train,tfidf_char_train)
     y_train = df_train['label']
 
     '''re-sample the data set'''
@@ -119,7 +125,8 @@ def predict(df_predict, clf, label):
     df_handcraft_test = pd.read_csv('../input//test_features.csv', encoding='utf-8')[features]
     tfidf_unigram_test = test_tfidf_unigram_features()
     tfidf_bigram_test = test_tfidf_bigram_features()
-    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test)
+    tfidf_char_test = test_tfidf_char_features()
+    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test,tfidf_char_test)
 
     '''predict label'''
     target = clf.predict(X_test)
@@ -133,10 +140,10 @@ if __name__ == '__main__':
     grid_search = train_cv('toxic')
     print(grid_search.best_params_)
 
-    df_test = pd.read_csv('../input/test.csv', encoding='utf-8')
-    df_predict = pd.DataFrame()
-    df_predict['id'] = df_test['id']
-    for label in labels:
-        clf = train(label)
-        df_predict = predict(df_predict, clf, label)
-    df_predict.to_csv('svm_submission', encoding='utf-8', index=False)
+    # df_test = pd.read_csv('../input/test.csv', encoding='utf-8')
+    # df_predict = pd.DataFrame()
+    # df_predict['id'] = df_test['id']
+    # for label in labels:
+    #     clf = train(label)
+    #     df_predict = predict(df_predict, clf, label)
+    # df_predict.to_csv('svm_submission', encoding='utf-8', index=False)
