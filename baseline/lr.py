@@ -36,12 +36,15 @@ def features_merge(*X):
 
 def train_cv(label):
     """
+    better params:
+    -   C=4
+
     gird search to tune hypeparameters
     :param label: target label
     :return: lr model with special parameters
     """
     # label_weight = df_train.shape[0]/df_train[df_train[label]==1].shape[0]
-    lr = LogisticRegression(class_weight='balanced', solver='sag', random_state=22, verbose=1, max_iter=6000)
+    lr = LogisticRegression(class_weight='balanced', solver='sag', random_state=22, verbose=1, max_iter=6000, C=4)
     # lr.set_params(class_weight={label:label_weight})
     # lr.set_params(class_weight='balanced')
 
@@ -53,18 +56,17 @@ def train_cv(label):
     tfidf_char_train = train_tfidf_char_features()
     print(df_handcraft_train.shape)
     # print(tfidf_train.shape)
-    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train,tfidf_char_train)
+    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
     # X_train = np.concatenate((df_handcraft_train,df_tfidf_train),axis=1)
     # df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
     y_train = df_train[label]
 
     params = {
         # 'penalty': ('l1', 'l2'),
-        'C': np.arange(1, 5, 1),
-        # 'solver': ('liblinear', 'sag', 'saga', 'newton-cg', 'lbfgs'),
-        'solver': ('sag', 'saga', 'newton-cg'),
-        'max_iter': range(6000, 7000, 100)
-
+        # 'C': np.arange(1, 5, 1),
+        'solver': ('liblinear', 'sag', 'saga', 'newton-cg', 'lbfgs'),
+        # 'solver': ('sag', 'saga', 'newton-cg'),
+        # 'max_iter': range(6000, 7000, 100)
     }
 
     clf = GridSearchCV(estimator=lr, param_grid=params, scoring='roc_auc', cv=5, verbose=1)
@@ -97,7 +99,7 @@ def train(label):
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
     tfidf_char_train = train_tfidf_char_features()
-    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train,tfidf_char_train)
+    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
     y_train = df_train['label']
 
     '''resample the data set'''
@@ -132,7 +134,7 @@ def predict(df_predict, clf, label):
     tfidf_unigram_test = test_tfidf_unigram_features()
     tfidf_bigram_test = test_tfidf_bigram_features()
     tfidf_char_test = test_tfidf_char_features()
-    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test,tfidf_char_test)
+    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test, tfidf_char_test)
 
     '''predict label'''
     target = clf.predict(X_test)
