@@ -22,4 +22,4 @@ print('label 0 ' + str(len(df_train) - label_sum))
 
 df_train['none'] = (df_train[labels].max(axis=1) == 0).astype(int)
 
-print(df_train.head())
+print(df_train['none'] == 0)

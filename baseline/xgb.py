@@ -38,15 +38,29 @@ def features_merge(*X):
 
 def train_cv(label):
     """
+    best params:
+    -   colsample_bytree:0.8
+    -   colsample_bylevel:0.6
+    -   gamma:2
     cross validation to fine tune hypeparameters
     :param label:
     :return:
     """
+
     df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
+
+    _toxic_count = len(df_train[df_train.max(axis=1) == 0])
+    print(_toxic_count)
+    _clean_count = len(df_train) - _toxic_count
+
     clf = XGBClassifier(learning_rate=0.1,
                         n_estimators=1000,
-                        max_depth=8,
-                        silent=True,
+                        max_depth=7,
+                        silent=False,
+                        # scale_pos_weight=_toxic_count / _clean_count,
+                        colsample_bytree=0.8,
+                        colsample_bylevel=0.6,
+                        gamma=2,
                         objective='binary:logistic')
 
     # feature composition
@@ -58,11 +72,12 @@ def train_cv(label):
     y_train = df_train[label]
 
     grid_params = {
-        'learning_rate': np.arange(0.08, 0.2, 0.01),
-        'n_estimators': range(1000, 4000, 100),
-        'max_depth': range(6, 12, 1),
-        'colsample_bytree': np.arange(0.6, 1, 0.1),
-        'colsample_bylevel': np.arange(0.6, 1.0, 0.1)
+        # 'learning_rate': np.arange(0.08, 0.2, 0.01),
+        # 'n_estimators': range(1000, 4000, 100),
+        'gamma': range(0, 5, 1),
+        # 'max_depth': range(6, 12, 1),
+        # 'colsample_bytree': np.arange(0.6, 1, 0.1),
+        # 'colsample_bylevel': np.arange(0.6, 1.0, 0.1)
     }
 
     # '''resample the data set'''
@@ -102,15 +117,15 @@ def train(label):
     X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
     y_train = df_train['label']
 
-    '''resample the data set'''
-    X_train_resampled, y_train_resampled = resample(X_train, y_train)
+    # '''resample the data set'''
+    # X_train_resampled, y_train_resampled = resample(X_train, y_train)
 
     '''feature selection'''
     model = SelectFromModel(estimator=clf)
-    X_train_resampled = model.transform(X_train_resampled)
+    X_train = model.transform(X_train)
 
     '''train test split'''
-    X_train, X_valid, y_train, y_valid = train_test_split(X_train_resampled, y_train_resampled, test_size=0.2,
+    X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.2,
                                                           random_state=2)
     clf.fit(X_train, y_train, eval_metric='auc', eval_set=list(zip((X_valid, y_valid))), early_stopping_rounds=20)
     y_predict = clf.predict(X_valid)

@@ -16,6 +16,7 @@ from baseline.resample import smote_tomek_oversampling
 from sklearn.metrics import roc_auc_score
 from feature_engineering.feature_extract import test_tfidf_bigram_features
 from feature_engineering.feature_extract import test_tfidf_unigram_features
+from feature_engineering.feature_extract import test_tfidf_char_features
 from sklearn.feature_selection import SelectFromModel
 
 """ 
@@ -61,7 +62,8 @@ def train_cv(label):
     df_handcraft_train = pd.read_csv('../input/train_features.csv')[features]
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
-    X_train = hstack(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
+    tfidf_char_train = train_tfidf_char_features()
+    X_train = hstack(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train,tfidf_char_train)
     y_train = df_train[label]
 
     grid_params = {
@@ -89,7 +91,8 @@ def train(label):
     df_handcraft_train = pd.read_csv('../input/train_features.csv', encoding='utf-8')[features].as_matrix()
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
-    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train)
+    tfidf_char_train = train_tfidf_char_features()
+    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train,tfidf_char_train)
     y_train = df_train['label']
 
     # '''resample the data set'''
@@ -123,7 +126,8 @@ def predict(df_predict, clf, label):
     df_handcraft_test = pd.read_csv('../input//test_features.csv', encoding='utf-8')[features]
     tfidf_unigram_test = test_tfidf_unigram_features()
     tfidf_bigram_test = test_tfidf_bigram_features()
-    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test)
+    tfidf_char_test = test_tfidf_char_features()
+    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test,tfidf_char_test)
 
     '''predict label'''
     target = clf.predict(X_test)

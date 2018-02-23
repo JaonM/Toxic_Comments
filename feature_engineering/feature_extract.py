@@ -24,7 +24,7 @@ def tfidf_corpus_unigram():
     df_corpus['comment_text'].apply(lambda x: clean(x))
     tfidfVec = TfidfVectorizer(
         strip_accents='unicode',
-        max_features=10000,
+        max_features=30000,
         ngram_range=(1, 1),
         analyzer='word',
     )
@@ -38,7 +38,7 @@ def tfidf_corpus_bigram():
     df_corpus['comment_text'].apply(lambda x: clean(x))
     tfidfVec = TfidfVectorizer(
         strip_accents='unicode',
-        max_features=10000,
+        max_features=30000,
         ngram_range=(2, 2),
         analyzer='word',
     )
@@ -52,7 +52,7 @@ def tfidf_corpus_char():
     df_corpus['comment_text'].apply(lambda x: clean(x))
     tfidfVec = TfidfVectorizer(
         strip_accents='unicode',
-        max_features=10000,
+        max_features=30000,
         ngram_range=(4, 4),
         analyzer='char',
     )
@@ -288,48 +288,58 @@ if __name__ == '__main__':
     # """
     # have run
 
-    df_train = pd.read_csv('../input/train.csv')
-    df_test = pd.read_csv('../input/test.csv')
-
-    df_train_clean = pd.read_csv('../input/train_clean.csv')
-    df_test_clean = pd.read_csv('../input/test_clean.csv')
-
-    # tfidf_feats = tfidf_corpus()
-    train_feats = pd.DataFrame()
-    train_feats['id'] = df_train['id']
-    train_feats['word_count'] = df_train_clean['comment_text'].apply(lambda x: word_count(x))
-    train_feats['unique_count'] = df_train_clean['comment_text'].apply(lambda x: unique_word_count(x))
-    train_feats['sentiment'] = df_train_clean['comment_text'].apply(lambda x: sentiment(x))
-    train_feats['subjectivity'] = df_train_clean['comment_text'].apply(lambda x: subjectivity(x))
-    train_feats['sentence_count'] = df_train['comment_text'].apply(lambda x: sentence_count(x))
-    train_feats['punctuation_count'] = df_train['comment_text'].apply(lambda x: punctuation_count(x))
-    train_feats['sentence_length'] = df_train['comment_text'].apply(lambda x: sentence_length(x))
-    train_feats['word_avg_length'] = df_train_clean['comment_text'].apply(lambda x: word_avg_length(x))
-    train_feats['uppercase_count'] = df_train['comment_text'].apply(lambda x: uppercase_count(x))
-    train_feats['stop_word_count'] = df_train['comment_text'].apply(lambda x: stop_word_count(x))
-    train_feats['noun_count'] = df_train_clean['comment_text'].apply(lambda x: noun_count(x))
-    train_feats['verb_count'] = df_train_clean['comment_text'].apply(lambda x: verb_count(x))
-    train_feats['adjective_count'] = df_train_clean['comment_text'].apply(lambda x: adjective_count(x))
-
-    train_feats.to_csv('../input/train_features.csv', index=False, encoding='utf-8')
-
-    test_feats = pd.DataFrame()
-    test_feats['id'] = df_test['id']
-    test_feats['word_count'] = df_test_clean['comment_text'].apply(lambda x: word_count(x))
-    test_feats['unique_count'] = df_test_clean['comment_text'].apply(lambda x: unique_word_count(x))
-    test_feats['sentiment'] = df_test_clean['comment_text'].apply(lambda x: sentiment(x))
-    test_feats['subjectivity'] = df_test_clean['comment_text'].apply(lambda x: subjectivity(x))
-    test_feats['sentence_count'] = df_test['comment_text'].apply(lambda x: sentence_count(x))
-    test_feats['punctuation_count'] = df_test['comment_text'].apply(lambda x: punctuation_count(x))
-    test_feats['sentence_length'] = df_test['comment_text'].apply(lambda x: sentence_length(x))
-    test_feats['word_avg_length'] = df_test_clean['comment_text'].apply(lambda x: word_avg_length(x))
-    test_feats['uppercase_count'] = df_test['comment_text'].apply(lambda x: uppercase_count(x))
-    test_feats['stop_word_count'] = df_test['comment_text'].apply(lambda x: stop_word_count(x))
-    test_feats['noun_count'] = df_test_clean['comment_text'].apply(lambda x: noun_count(x))
-    test_feats['verb_count'] = df_test_clean['comment_text'].apply(lambda x: verb_count(x))
-    test_feats['adjective_count'] = df_test_clean['comment_text'].apply(lambda x: adjective_count(x))
-    test_feats.to_csv('../input/test_features.csv', index=False, encoding='utf-8')
+    # df_train = pd.read_csv('../input/train.csv')
+    # df_test = pd.read_csv('../input/test.csv')
+    #
+    # df_train_clean = pd.read_csv('../input/train_clean.csv')
+    # df_test_clean = pd.read_csv('../input/test_clean.csv')
+    #
+    # # tfidf_feats = tfidf_corpus()
+    # train_feats = pd.DataFrame()
+    # train_feats['id'] = df_train['id']
+    # train_feats['word_count'] = df_train_clean['comment_text'].apply(lambda x: word_count(x))
+    # train_feats['unique_count'] = df_train_clean['comment_text'].apply(lambda x: unique_word_count(x))
+    # train_feats['sentiment'] = df_train_clean['comment_text'].apply(lambda x: sentiment(x))
+    # train_feats['subjectivity'] = df_train_clean['comment_text'].apply(lambda x: subjectivity(x))
+    # train_feats['sentence_count'] = df_train['comment_text'].apply(lambda x: sentence_count(x))
+    # train_feats['punctuation_count'] = df_train['comment_text'].apply(lambda x: punctuation_count(x))
+    # train_feats['sentence_length'] = df_train['comment_text'].apply(lambda x: sentence_length(x))
+    # train_feats['word_avg_length'] = df_train_clean['comment_text'].apply(lambda x: word_avg_length(x))
+    # train_feats['uppercase_count'] = df_train['comment_text'].apply(lambda x: uppercase_count(x))
+    # train_feats['stop_word_count'] = df_train['comment_text'].apply(lambda x: stop_word_count(x))
+    # train_feats['noun_count'] = df_train_clean['comment_text'].apply(lambda x: noun_count(x))
+    # train_feats['verb_count'] = df_train_clean['comment_text'].apply(lambda x: verb_count(x))
+    # train_feats['adjective_count'] = df_train_clean['comment_text'].apply(lambda x: adjective_count(x))
+    #
+    # train_feats.to_csv('../input/train_features.csv', index=False, encoding='utf-8')
+    #
+    # test_feats = pd.DataFrame()
+    # test_feats['id'] = df_test['id']
+    # test_feats['word_count'] = df_test_clean['comment_text'].apply(lambda x: word_count(x))
+    # test_feats['unique_count'] = df_test_clean['comment_text'].apply(lambda x: unique_word_count(x))
+    # test_feats['sentiment'] = df_test_clean['comment_text'].apply(lambda x: sentiment(x))
+    # test_feats['subjectivity'] = df_test_clean['comment_text'].apply(lambda x: subjectivity(x))
+    # test_feats['sentence_count'] = df_test['comment_text'].apply(lambda x: sentence_count(x))
+    # test_feats['punctuation_count'] = df_test['comment_text'].apply(lambda x: punctuation_count(x))
+    # test_feats['sentence_length'] = df_test['comment_text'].apply(lambda x: sentence_length(x))
+    # test_feats['word_avg_length'] = df_test_clean['comment_text'].apply(lambda x: word_avg_length(x))
+    # test_feats['uppercase_count'] = df_test['comment_text'].apply(lambda x: uppercase_count(x))
+    # test_feats['stop_word_count'] = df_test['comment_text'].apply(lambda x: stop_word_count(x))
+    # test_feats['noun_count'] = df_test_clean['comment_text'].apply(lambda x: noun_count(x))
+    # test_feats['verb_count'] = df_test_clean['comment_text'].apply(lambda x: verb_count(x))
+    # test_feats['adjective_count'] = df_test_clean['comment_text'].apply(lambda x: adjective_count(x))
+    # test_feats.to_csv('../input/test_features.csv', index=False, encoding='utf-8')
 
     # __lda_topic()
     # """
-    generate_topic_features(2)
+    # generate_topic_features(2)
+
+    # statics_train = pd.read_csv('../input/train_features.csv').drop(labels='id', axis=1)
+    # statics_train.to_csv('../feature_engineering/statics/statics_train.csv', index=False, encoding='utf-8')
+
+    # statics_test = pd.read_csv('../input/test_features.csv').drop(labels='id', axis=1)
+    # statics_test.to_csv('../feature_engineering/statics/statics_test.csv', index=False, encoding='utf-8')
+
+    tfidf_unigram_train = pd.DataFrame(data=train_tfidf_unigram_features().todense())
+    print(len(tfidf_unigram_train))
+    tfidf_unigram_train.to_csv('../feature_engineering/tfidf/tfidf_unigram_train.csv',index=False,encoding='utf-8')
