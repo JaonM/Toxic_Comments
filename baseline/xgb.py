@@ -38,9 +38,9 @@ def features_merge(*X):
 
 def train_cv(label):
     """
-    best params:
-    -   colsample_bytree:0.8
-    -   colsample_bylevel:0.6
+    better params:
+    -   colsample_bytree=0.8
+    -   colsample_bylevel=0.6
     -   gamma:2
     cross validation to fine tune hypeparameters
     :param label:
