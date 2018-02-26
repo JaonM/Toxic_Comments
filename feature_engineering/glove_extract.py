@@ -35,22 +35,21 @@ def get_coefs(line):
 
 
 # embedding_index = dict(get_coefs(o.strip().split() for o in codecs.open(EMBEDDING_FILE, encoding='utf-8')))
-embedding_index = dict()
-for o in codecs.open(EMBEDDING_FILE, encoding='utf-8'):
-    try:
-        # word, vector = get_coefs(*o.strip().split())
-        word, vector = get_coefs(o)
-        # vector = np.asarray(vector,dtype='float')
-        # print(word)
-        # print(vector)
-        if len(vector) == 300:
+def create_embedding():
+    embedding_index = dict()
+    for o in codecs.open(EMBEDDING_FILE, encoding='utf-8'):
+        try:
+            # word, vector = get_coefs(*o.strip().split())
+            word, vector = get_coefs(o)
+            # vector = np.asarray(vector,dtype='float')
+            # print(word)
             # print(vector)
-            embedding_index[word] = vector
-    except:
-        continue
-
-all_embedding = np.stack(embedding_index.values())
-embedding_mean, embedding_std = all_embedding.mean(), all_embedding.std()
+            if len(vector) == 300:
+                # print(vector)
+                embedding_index[word] = vector
+        except:
+            continue
+    return embedding_index
 
 
 # print(embedding_index)
@@ -63,6 +62,9 @@ def get_embedding(sequence, embedding_dict):
     :param embedding_dict:
     :return: embedding list
     """
+    all_embedding = np.stack(embedding_index.values())
+    embedding_mean, embedding_std = all_embedding.mean(), all_embedding.std()
+
     _len = len(sequence)
     if len(sequence) > MAX_LEN:
         _len = MAX_LEN
@@ -70,9 +72,10 @@ def get_embedding(sequence, embedding_dict):
     else:
         diff = MAX_LEN - _len
     sequence_embedding = []
+    default_embedding = np.random.normal(embedding_mean, embedding_std, EMBEDDING_SIZE)
     for i in range(0, _len):
         sequence_embedding.extend(
-            embedding_dict.get(sequence[i], np.random.normal(embedding_mean, embedding_std, EMBEDDING_SIZE)))
+            embedding_dict.get(sequence[i], default_embedding))
     sequence_embedding.extend([0] * diff * EMBEDDING_SIZE)
     return sequence_embedding
 
@@ -80,6 +83,8 @@ def get_embedding(sequence, embedding_dict):
 '''
 normal distribution sample for those word not in embedding
 '''
+
+embedding_index = create_embedding()
 
 
 def get_train_embedding():
@@ -94,4 +99,3 @@ def get_test_embedding():
 
 # print(get_train_embedding())
 print(get_train_embedding().shape)
-
