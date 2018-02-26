@@ -19,6 +19,8 @@ from feature_engineering.feature_extract import test_tfidf_char_features
 from sklearn.feature_selection import SelectFromModel
 from baseline.resample import smote_tomek_oversampling
 from sklearn.model_selection import StratifiedKFold
+from feature_engineering.glove_extract import get_train_embedding
+from feature_engineering.glove_extract import get_test_embedding
 
 """ 
     features component:
@@ -57,7 +59,7 @@ def train_grid_search(label):
 
     clf = XGBClassifier(learning_rate=0.1,
                         n_estimators=1000,
-                        max_depth=7,
+                        max_depth=4,
                         silent=False,
                         # scale_pos_weight=_toxic_count / _clean_count,
                         colsample_bytree=0.8,
@@ -70,7 +72,10 @@ def train_grid_search(label):
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
     tfidf_char_train = train_tfidf_char_features()
-    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
+    word_embedding_train = get_train_embedding()
+    print(word_embedding_train.shape)
+    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train,
+                             word_embedding_train)
     # X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_char_train)
     y_train = df_train[label]
 
@@ -78,7 +83,7 @@ def train_grid_search(label):
         # 'learning_rate': np.arange(0.08, 0.2, 0.01),
         # 'n_estimators': range(1000, 4000, 100),
         # 'gamma': range(0, 5, 1),
-        'max_depth': range(3, 4, 1),
+        'max_depth': range(4, 4, 1),
         # 'colsample_bytree': np.arange(0.6, 1, 0.1),
         # 'colsample_bylevel': np.arange(0.6, 1.0, 0.1)
     }
@@ -152,7 +157,7 @@ def train_cv(label):
     clf_list = []
     for idx_train, idx_valid in skf.split(df_train[label], df_train[label]):
         print("fitting fold " + str(count))
-        clf = _train(label, idx_train, idx_valid)
+        clf = _train(label, idx_train, idx_valid, count)
         count += 1
         clf_list.append(clf)
 
@@ -170,21 +175,23 @@ def predict_cv(df_predict, label, classifier_list):
     tfidf_unigram_test = test_tfidf_unigram_features()
     tfidf_bigram_test = test_tfidf_bigram_features()
     tfidf_char_test = test_tfidf_char_features()
-    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test, tfidf_char_test)
+    word_embedding_test = get_test_embedding()
+    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test, tfidf_char_test,word_embedding_test)
 
     '''predict label average'''
     for clf in classifier_list:
         target = clf.predict(X_test)
         df_predict[label] += target
-    df_predict[label] = df_predict[label]/len(classifier_list)
+    df_predict[label] = df_predict[label] / len(classifier_list)
     return df_predict
 
 
-def _train(label, idx_train, idx_valid):
+def _train(label, idx_train, idx_valid, index):
     """
     :param label:
     :param idx_train: train index
     :param idx_valid: valid index
+    :param index: number of training process
     :return: classifier
     """
     df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
@@ -216,7 +223,7 @@ def _train(label, idx_train, idx_valid):
     y_valid = X_train[idx_valid]
     clf.fit(X_train, y_train, eval_metric='auc', eval_set=[(X_valid, y_valid)], early_stopping_rounds=20)
     y_predict = clf.predict(X_valid)
-    print(label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
+    print('cv ' + str(count) + ' ' + label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
 
     # clf.fit(X_train_resampled, y_train_resampled)
     return clf

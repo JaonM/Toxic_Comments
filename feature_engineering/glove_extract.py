@@ -13,14 +13,12 @@ EMBEDDING_SIZE = 300
 MAX_FEATURES = 30000  # number of unique words the rows of embedding matrix
 MAX_LEN = 100  # max number of words in a comment to use
 
-df_train = pd.read_csv('../input/train_clean.csv', encoding='utf-8')
-df_test = pd.read_csv('../input/test_clean.csv', encoding='utf-8')
 
-tokenizer = Tokenizer(num_words=MAX_FEATURES)
-tokenizer.fit_on_texts(pd.concat((df_train, df_test))['comment_text'].values)
-
-sequence_train = tokenizer.texts_to_sequences(df_train['comment_text'])
-sequence_test = tokenizer.texts_to_sequences(df_test['comment_text'])
+# tokenizer = Tokenizer(num_words=MAX_FEATURES)
+# tokenizer.fit_on_texts(pd.concat((df_train, df_test))['comment_text'].values)
+#
+# sequence_train = tokenizer.texts_to_sequences(df_train['comment_text'])
+# sequence_test = tokenizer.texts_to_sequences(df_test['comment_text'])
 
 
 # X_train = pad_sequences(sequence_train, maxlen=MAX_LEN)
@@ -46,13 +44,16 @@ for o in codecs.open(EMBEDDING_FILE, encoding='utf-8'):
         # print(word)
         # print(vector)
         if len(vector) == 300:
+            # print(vector)
             embedding_index[word] = vector
     except:
         continue
 
 all_embedding = np.stack(embedding_index.values())
 embedding_mean, embedding_std = all_embedding.mean(), all_embedding.std()
-print(embedding_index)
+
+
+# print(embedding_index)
 
 
 def get_embedding(sequence, embedding_dict):
@@ -71,7 +72,7 @@ def get_embedding(sequence, embedding_dict):
     sequence_embedding = []
     for i in range(0, _len):
         sequence_embedding.extend(
-            embedding_dict.get(sequence[i], np.random.normal(embedding_mean, embedding_std, (1, EMBEDDING_SIZE))))
+            embedding_dict.get(sequence[i], np.random.normal(embedding_mean, embedding_std, EMBEDDING_SIZE)))
     sequence_embedding.extend([0] * diff * EMBEDDING_SIZE)
     return sequence_embedding
 
@@ -79,6 +80,18 @@ def get_embedding(sequence, embedding_dict):
 '''
 normal distribution sample for those word not in embedding
 '''
-# X_train = df_train['comment_text']
-X_train = df_train['comment_text'].apply(lambda x: get_embedding(x.split(), embedding_index))
-print(X_train)
+
+
+def get_train_embedding():
+    df_train = pd.read_csv('../input/train_clean.csv', encoding='utf-8')
+    return df_train['comment_text'].apply(lambda x: get_embedding(x.split(), embedding_index)).values
+
+
+def get_test_embedding():
+    df_test = pd.read_csv('../input/test_clean.csv', encoding='utf-8')
+    return df_test['comment_text'].apply(lambda x: get_embedding(x.split(), embedding_index))
+
+
+# print(get_train_embedding())
+print(get_train_embedding().shape)
+
