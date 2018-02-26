@@ -38,6 +38,7 @@ def train_cv(label):
     """
     better params:
     -   C=4
+    -   solver='lbfgs'
 
     gird search to tune hypeparameters
     :param label: target label
