@@ -53,7 +53,7 @@ def tfidf_corpus_char():
     tfidfVec = TfidfVectorizer(
         strip_accents='unicode',
         max_features=30000,
-        ngram_range=(4, 4),
+        ngram_range=(2, 6),
         analyzer='char',
     )
     return tfidfVec.fit_transform(df_corpus['comment_text'])
