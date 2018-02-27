@@ -7,6 +7,7 @@ import pandas as pd
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 import codecs
+import gc
 
 EMBEDDING_FILE = '../input/glove.840B.300d.txt'
 EMBEDDING_SIZE = 300
@@ -55,15 +56,13 @@ def create_embedding():
 # print(embedding_index)
 
 
-def get_embedding(sequence, embedding_dict):
+def get_embedding(sequence, embedding_dict, default_embedding):
     """
 
     :param sequence:
     :param embedding_dict:
     :return: embedding list
     """
-    all_embedding = np.stack(embedding_index.values())
-    embedding_mean, embedding_std = all_embedding.mean(), all_embedding.std()
 
     _len = len(sequence)
     if len(sequence) > MAX_LEN:
@@ -72,11 +71,11 @@ def get_embedding(sequence, embedding_dict):
     else:
         diff = MAX_LEN - _len
     sequence_embedding = []
-    default_embedding = np.random.normal(embedding_mean, embedding_std, EMBEDDING_SIZE)
     for i in range(0, _len):
         sequence_embedding.extend(
             embedding_dict.get(sequence[i], default_embedding))
     sequence_embedding.extend([0] * diff * EMBEDDING_SIZE)
+    print(len(sequence_embedding))
     return sequence_embedding
 
 
@@ -84,18 +83,35 @@ def get_embedding(sequence, embedding_dict):
 normal distribution sample for those word not in embedding
 '''
 
-embedding_index = create_embedding()
-
 
 def get_train_embedding():
+    embedding_index = create_embedding()
+    all_embedding = np.stack(embedding_index.values())
+    embedding_mean, embedding_std = all_embedding.mean(), all_embedding.std()
+    del all_embedding
+    gc.collect()
+    default_embedding = np.random.normal(embedding_mean, embedding_std, EMBEDDING_SIZE)
     df_train = pd.read_csv('../input/train_clean.csv', encoding='utf-8')
-    return df_train['comment_text'].apply(lambda x: get_embedding(x.split(), embedding_index)).values
+    train_embedding = []
+    for index, item in df_train.iterrows():
+        print(index)
+        train_embedding.append(get_embedding(item['comment_text'].split(), embedding_index, default_embedding))
+    # return df_train['comment_text'].apply(lambda x: get_embedding(x.split(), embedding_index,default_embedding)).values
+    return np.asarray(train_embedding)
 
 
 def get_test_embedding():
     df_test = pd.read_csv('../input/test_clean.csv', encoding='utf-8')
-    return df_test['comment_text'].apply(lambda x: get_embedding(x.split(), embedding_index))
+    embedding_index = create_embedding()
+    all_embedding = np.stack(embedding_index.values())
+    embedding_mean, embedding_std = all_embedding.mean(), all_embedding.std()
+    del all_embedding
+    gc.collect()
+    default_embedding = np.random.normal(embedding_mean, embedding_std, EMBEDDING_SIZE)
+    return df_test['comment_text'].apply(lambda x: get_embedding(x.split(), embedding_index, default_embedding))
 
 
 # print(get_train_embedding())
-print(get_train_embedding().shape)
+# embedding = get_train_embedding()
+# print(embedding.shape)
+# print(embedding.reshape(len(embedding), MAX_LEN * EMBEDDING_SIZE).shape)
