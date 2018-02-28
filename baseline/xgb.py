@@ -72,7 +72,7 @@ def train_grid_search(label):
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
     tfidf_char_train = train_tfidf_char_features()
-    word_embedding_train = get_train_embedding()
+    word_embedding_train = pd.read_csv('../feature_engineering/word_embedding/train_embedding.csv', encoding='utf-8')
     print(word_embedding_train.shape)
     X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train,
                              word_embedding_train)
@@ -83,7 +83,7 @@ def train_grid_search(label):
         # 'learning_rate': np.arange(0.08, 0.2, 0.01),
         # 'n_estimators': range(1000, 4000, 100),
         # 'gamma': range(0, 5, 1),
-        'max_depth': range(4, 4, 1),
+        'max_depth': range(3, 5, 1),
         # 'colsample_bytree': np.arange(0.6, 1, 0.1),
         # 'colsample_bylevel': np.arange(0.6, 1.0, 0.1)
     }
@@ -176,7 +176,8 @@ def predict_cv(df_predict, label, classifier_list):
     tfidf_bigram_test = test_tfidf_bigram_features()
     tfidf_char_test = test_tfidf_char_features()
     word_embedding_test = get_test_embedding()
-    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test, tfidf_char_test,word_embedding_test)
+    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test, tfidf_char_test,
+                            word_embedding_test)
 
     '''predict label average'''
     for clf in classifier_list:

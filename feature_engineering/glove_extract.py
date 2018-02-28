@@ -12,7 +12,7 @@ import gc
 EMBEDDING_FILE = '../input/glove.840B.300d.txt'
 EMBEDDING_SIZE = 300
 MAX_FEATURES = 30000  # number of unique words the rows of embedding matrix
-MAX_LEN = 100  # max number of words in a comment to use
+MAX_LEN = 30  # max number of words in a comment to use
 
 
 # tokenizer = Tokenizer(num_words=MAX_FEATURES)
@@ -79,6 +79,19 @@ def get_embedding(sequence, embedding_dict, default_embedding):
     return sequence_embedding
 
 
+def padding_sequences(sequence, max_len=MAX_LEN):
+    """
+    padding 0 the sequence into fix length
+    :param sequence:
+    :param max_len:
+    :return:
+    """
+    if len(sequence) < EMBEDDING_SIZE * max_len:
+        diff = EMBEDDING_SIZE * max_len - len(sequence)
+        sequence.extend([0] * diff)
+    return sequence
+
+
 '''
 normal distribution sample for those word not in embedding
 '''
@@ -97,7 +110,7 @@ def get_train_embedding():
         print(index)
         train_embedding.append(get_embedding(item['comment_text'].split(), embedding_index, default_embedding))
     # return df_train['comment_text'].apply(lambda x: get_embedding(x.split(), embedding_index,default_embedding)).values
-    return np.asarray(train_embedding)
+    return np.asarray(train_embedding, dtype='float16')
 
 
 def get_test_embedding():
@@ -115,3 +128,8 @@ def get_test_embedding():
 # embedding = get_train_embedding()
 # print(embedding.shape)
 # print(embedding.reshape(len(embedding), MAX_LEN * EMBEDDING_SIZE).shape)
+if __name__ == '__main__':
+    train_embedding = get_train_embedding()
+    train_embedding = pd.DataFrame(train_embedding)
+    print('storing train embedding csv...')
+    train_embedding.to_csv('../feature_engineering/word_embedding/train_embedding.csv', index=False, encoding='utf-8')
