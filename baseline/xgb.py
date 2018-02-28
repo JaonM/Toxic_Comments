@@ -72,11 +72,11 @@ def train_grid_search(label):
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
     tfidf_char_train = train_tfidf_char_features()
-    # word_embedding_train = pd.read_csv('../feature_engineering/word_embedding/train_embedding.csv', encoding='utf-8')
+    word_embedding_train = pd.read_csv('../feature_engineering/word_embedding/w2c_train_embedding.csv', encoding='utf-8')
     # print(word_embedding_train.shape)
-    # X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train,
-    #                          word_embedding_train)
-    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
+    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train,
+                             word_embedding_train)
+    # X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
     # X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_char_train)
     y_train = df_train[label]
 
@@ -86,7 +86,7 @@ def train_grid_search(label):
         # 'gamma': range(0, 5, 1),
         # 'max_depth': range(4, 5, 1),
         # 'colsample_bytree': np.arange(0.6, 1, 0.1),
-        'colsample_bylevel': np.arange(0.4, 1.0, 0.1)
+        'colsample_bylevel': np.arange(0.5, 1.0, 0.1)
     }
 
     # '''resample the data set'''
@@ -156,9 +156,22 @@ def train_cv(label):
     skf = StratifiedKFold(n_splits=num_fold, shuffle=True)
     count = 0
     clf_list = []
-    for idx_train, idx_valid in skf.split(df_train[label], df_train[label]):
+    '''feature composition'''
+    df_handcraft_train = pd.read_csv('../input/train_features.csv', encoding='utf-8')[features].as_matrix()
+    tfidf_unigram_train = train_tfidf_unigram_features()
+    tfidf_bigram_train = train_tfidf_bigram_features()
+    tfidf_char_train = train_tfidf_char_features()
+    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
+    y_train = df_train['label']
+
+    for idx_train, idx_valid in skf.split(y_train, y_train):
         print("fitting fold " + str(count))
-        clf = _train(label, idx_train, idx_valid, count)
+        clf = _train(label,
+                     x_train=X_train[idx_train],
+                     y_train=y_train[idx_train],
+                     idx_train=idx_train,
+                     idx_valid=idx_valid,
+                     index=count)
         count += 1
         clf_list.append(clf)
 
@@ -177,6 +190,7 @@ def predict_cv(df_predict, label, classifier_list):
     tfidf_bigram_test = test_tfidf_bigram_features()
     tfidf_char_test = test_tfidf_char_features()
     word_embedding_test = get_test_embedding()
+
     X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test, tfidf_char_test,
                             word_embedding_test)
 
@@ -188,7 +202,7 @@ def predict_cv(df_predict, label, classifier_list):
     return df_predict
 
 
-def _train(label, idx_train, idx_valid, index):
+def _train(label, x_train, y_train, idx_train, idx_valid, index):
     """
     :param label:
     :param idx_train: train index
@@ -196,33 +210,25 @@ def _train(label, idx_train, idx_valid, index):
     :param index: number of training process
     :return: classifier
     """
-    df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
+    # df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
     clf = XGBClassifier(learning_rate=0.1,
                         n_estimators=1000,
                         max_depth=8,
                         silent=True,
                         objective='binary:logistic')
 
-    '''feature composition'''
-    df_handcraft_train = pd.read_csv('../input/train_features.csv', encoding='utf-8')[features].as_matrix()
-    tfidf_unigram_train = train_tfidf_unigram_features()
-    tfidf_bigram_train = train_tfidf_bigram_features()
-    tfidf_char_train = train_tfidf_char_features()
-    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
-    y_train = df_train['label']
-
     # '''resample the data set'''
     # X_train_resampled, y_train_resampled = resample(X_train, y_train)
 
     '''feature selection'''
     model = SelectFromModel(estimator=clf)
-    X_train = model.transform(X_train)
+    X_train = model.transform(x_train)
 
     '''train test split'''
     X_train = X_train[idx_train]
     y_train = y_train[idx_train]
     X_valid = X_train[idx_valid]
-    y_valid = X_train[idx_valid]
+    y_valid = y_train[idx_valid]
     clf.fit(X_train, y_train, eval_metric='auc', eval_set=[(X_valid, y_valid)], early_stopping_rounds=20)
     y_predict = clf.predict(X_valid)
     print('cv ' + str(count) + ' ' + label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))

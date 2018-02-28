@@ -67,14 +67,15 @@ def get_embedding(sequence, embedding_dict, default_embedding):
     _len = len(sequence)
     if len(sequence) > MAX_LEN:
         _len = MAX_LEN
-        diff = 0
-    else:
-        diff = MAX_LEN - _len
+        # diff = 0
+    # else:
+        # diff = MAX_LEN - _len
     sequence_embedding = []
     for i in range(0, _len):
         sequence_embedding.extend(
             embedding_dict.get(sequence[i], default_embedding))
-    sequence_embedding.extend([0] * diff * EMBEDDING_SIZE)
+    # sequence_embedding.extend([0] * diff * EMBEDDING_SIZE)
+    sequence_embedding = padding_sequences(sequence_embedding)
     print(len(sequence_embedding))
     return sequence_embedding
 
