@@ -83,9 +83,9 @@ def train_grid_search(label):
         # 'learning_rate': np.arange(0.08, 0.2, 0.01),
         # 'n_estimators': range(1000, 4000, 100),
         # 'gamma': range(0, 5, 1),
-        'max_depth': range(3, 5, 1),
+        # 'max_depth': range(4, 7, 1),
         # 'colsample_bytree': np.arange(0.6, 1, 0.1),
-        # 'colsample_bylevel': np.arange(0.6, 1.0, 0.1)
+        'colsample_bylevel': np.arange(0.4, 1.0, 0.1)
     }
 
     # '''resample the data set'''
