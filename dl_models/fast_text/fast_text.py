@@ -12,7 +12,9 @@ from sklearn.model_selection import StratifiedKFold
 from keras.layers import Embedding
 from keras.layers import GlobalAveragePooling1D
 from keras.layers import Dense
-from sklearn.metrics import roc_auc_score
+from dl_models.custom import RocCallback
+from keras.callbacks import EarlyStopping
+from keras.callbacks import ModelCheckpoint
 
 
 def create_ngrams_set(input_list, ngram_value=2):
@@ -82,11 +84,16 @@ print('padding sequence...')
 X_train = pad_sequences(X_train, maxlen=max_len)
 X_test = pad_sequences(X_test, maxlen=max_len)
 print('X train shape is', X_train.shape)
-print('X test shape is', X_test, shape)
+print('X test shape is', X_test.shape)
 
 labels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
 y_train = df_train[labels]
 print('labels shape is', y_train.shape)
+
+print('constucting class weight map')
+class_weight = dict()
+for i in range(len(labels)):
+    class_weight[i] = len(df_train[df_train[labels[i]] == 1])
 
 num_split = 10
 print('Build {} fold cv Model...'.format(num_split))
@@ -103,3 +110,18 @@ for idx_train, idx_val in skf.split(X_train, X_train):
     model.add(Embedding(max_features, embedding_dim, input_length=max_len))
     model.add(GlobalAveragePooling1D())
     model.add(Dense(units=6, activation='sigmoid'))
+
+    roc_auc_callback = RocCallback(X_train, y_train, X_valid, y_valid)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=10)
+    model_save_path = './fast_text_' + str(indice_fold) + '.h5'
+    model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.fit(X_train,
+              y_train,
+              batch_size=batch_size,
+              epochs=num_epoch,
+              validation_data=(X_valid, y_valid),
+              class_weight=class_weight,
+              callbacks=[roc_auc_callback, early_stopping, model_check_point])
+
+    indice_fold += 1

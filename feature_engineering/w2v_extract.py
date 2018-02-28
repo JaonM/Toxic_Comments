@@ -1,59 +1,39 @@
 # -*- coding:utf-8 -*-
 """
-extract glove word vector features
+word2vec training model
 """
+from gensim.models import Word2Vec
 from keras.preprocessing.text import Tokenizer
 import pandas as pd
-from keras.preprocessing.sequence import pad_sequences
 import numpy as np
-import codecs
 import gc
 
-EMBEDDING_FILE = '../input/glove.840B.300d.txt'
-EMBEDDING_SIZE = 300
-MAX_FEATURES = 30000  # number of unique words the rows of embedding matrix
-MAX_LEN = 30  # max number of words in a comment to use
+df_train = pd.read_csv('../input/train_clean.csv', encoding='utf-8')
+df_test = pd.read_csv('../input/test_clean.csv', encoding='utf-8')
+
+EMBEDDING_SIZE = 100
+MAX_FEATURES = 30000
+MAX_LEN = 30
 
 
-# tokenizer = Tokenizer(num_words=MAX_FEATURES)
-# tokenizer.fit_on_texts(pd.concat((df_train, df_test))['comment_text'].values)
-#
-# sequence_train = tokenizer.texts_to_sequences(df_train['comment_text'])
-# sequence_test = tokenizer.texts_to_sequences(df_test['comment_text'])
+def train_corpus(corpus):
+    w2c = Word2Vec(sentences=corpus, iter=100, size=EMBEDDING_SIZE, min_count=5)
+    w2c.save('../input/toxic_vectors-negative100')
 
 
-# X_train = pad_sequences(sequence_train, maxlen=MAX_LEN)
-# X_test = pad_sequences(sequence_test, maxlen=MAX_LEN)
-
-
-# def get_coefs(word, *arr):
-#     return word, np.asarray(arr, dtype='float32')
-
-
-def get_coefs(line):
-    lines = line.strip().split()
-    return lines[0], np.asarray(lines[1:], dtype='float32')
-
-
-# embedding_index = dict(get_coefs(o.strip().split() for o in codecs.open(EMBEDDING_FILE, encoding='utf-8')))
 def create_embedding():
     embedding_index = dict()
-    for o in codecs.open(EMBEDDING_FILE, encoding='utf-8'):
+    tokenizer = Tokenizer(num_words=MAX_FEATURES)
+    tokenizer.fit_on_texts(pd.concat((df_train, df_test))['comment_text'].values)
+
+    w2c = Word2Vec.load('../input/toxic_vectors-negative100')
+    for value in tokenizer.word_index.keys():
+        print(value)
         try:
-            # word, vector = get_coefs(*o.strip().split())
-            word, vector = get_coefs(o)
-            # vector = np.asarray(vector,dtype='float')
-            # print(word)
-            # print(vector)
-            if len(vector) == 300:
-                # print(vector)
-                embedding_index[word] = vector
+            embedding_index[value] = w2c[value]
         except:
             continue
     return embedding_index
-
-
-# print(embedding_index)
 
 
 def get_embedding(sequence, embedding_dict, default_embedding):
@@ -69,7 +49,7 @@ def get_embedding(sequence, embedding_dict, default_embedding):
         _len = MAX_LEN
         # diff = 0
     # else:
-        # diff = MAX_LEN - _len
+    # diff = MAX_LEN - _len
     sequence_embedding = []
     for i in range(0, _len):
         sequence_embedding.extend(
@@ -91,11 +71,6 @@ def padding_sequences(sequence, max_len=MAX_LEN):
         diff = EMBEDDING_SIZE * max_len - len(sequence)
         sequence.extend([0] * diff)
     return sequence
-
-
-'''
-normal distribution sample for those word not in embedding
-'''
 
 
 def get_train_embedding():
@@ -125,12 +100,9 @@ def get_test_embedding():
     return df_test['comment_text'].apply(lambda x: get_embedding(x.split(), embedding_index, default_embedding))
 
 
-# print(get_train_embedding())
-# embedding = get_train_embedding()
-# print(embedding.shape)
-# print(embedding.reshape(len(embedding), MAX_LEN * EMBEDDING_SIZE).shape)
 if __name__ == '__main__':
     train_embedding = get_train_embedding()
     train_embedding = pd.DataFrame(train_embedding)
     print('storing train embedding csv...')
-    train_embedding.to_csv('../feature_engineering/word_embedding/train_embedding.csv', index=False, encoding='utf-8')
+    train_embedding.to_csv('../feature_engineering/word_embedding/w2v_train_embedding.csv', index=False,
+                           encoding='utf-8')
