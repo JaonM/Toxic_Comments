@@ -109,3 +109,7 @@ input/
 
 # lda model
 lda.*
+
+# features
+feature_engineering/doc2vec/
+feature_engineering/word_embedding/
