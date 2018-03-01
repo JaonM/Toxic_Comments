@@ -5,7 +5,7 @@ from keras.callbacks import Callback
 
 class RocCallback(Callback):
     def __init__(self, x_train, y_train, x_valid, y_valid):
-        Callback.__init__()
+        Callback.__init__(self)
         self.x = x_train
         self.y = y_train
         self.x_val = x_valid
