@@ -101,7 +101,7 @@ skf = StratifiedKFold(n_splits=10, shuffle=True)
 indice_fold = 0
 
 model_list = list()
-for idx_train, idx_val in skf.split(X_train, X_train):
+for idx_train, idx_val in skf.split(y_train, y_train):
     print('training {} fold', indice_fold)
     X_train = X_train[idx_train]
     y_train = y_train[idx_train]
