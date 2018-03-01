@@ -58,7 +58,7 @@ def train_grid_search(label):
     _clean_count = len(df_train) - _toxic_count
 
     clf = XGBClassifier(learning_rate=0.1,
-                        n_estimators=1000,
+                        n_estimators=2000,
                         max_depth=4,
                         silent=False,
                         # scale_pos_weight=_toxic_count / _clean_count,
@@ -72,7 +72,7 @@ def train_grid_search(label):
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
     tfidf_char_train = train_tfidf_char_features()
-    word_embedding_train = pd.read_csv('../feature_engineering/word_embedding/w2c_train_embedding.csv', encoding='utf-8')
+    word_embedding_train = pd.read_csv('../feature_engineering/word_embedding/w2v_train_embedding.csv', encoding='utf-8')
     # print(word_embedding_train.shape)
     X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train,
                              word_embedding_train)
@@ -96,7 +96,7 @@ def train_grid_search(label):
                                                           random_state=2)
     print('grid search construct')
     grid_clf = GridSearchCV(estimator=clf, param_grid=grid_params, verbose=1, scoring='roc_auc', cv=5)
-    grid_clf.fit(X=X_train, y=y_train, eval_metric='auc', eval_set=[(X_valid, y_valid)], early_stopping_rounds=20)
+    grid_clf.fit(X=X_train, y=y_train, eval_metric='auc', eval_set=[(X_valid, y_valid)], early_stopping_rounds=50)
     return grid_clf
 
 
