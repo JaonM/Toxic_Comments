@@ -58,7 +58,7 @@ def train_grid_search(label):
     _clean_count = len(df_train) - _toxic_count
 
     clf = XGBClassifier(learning_rate=0.1,
-                        n_estimators=1000,
+                        n_estimators=1500,
                         max_depth=4,
                         silent=False,
                         # scale_pos_weight=_toxic_count / _clean_count,
@@ -72,7 +72,7 @@ def train_grid_search(label):
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
     tfidf_char_train = train_tfidf_char_features()
-    word_embedding_train = pd.read_csv('../feature_engineering/word_embedding/w2c_train_embedding.csv', encoding='utf-8')
+    word_embedding_train = pd.read_csv('../feature_engineering/word_embedding/w2v_train_embedding.csv', encoding='utf-8')
     # print(word_embedding_train.shape)
     X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train,
                              word_embedding_train)
@@ -114,9 +114,13 @@ def resample(X, y):
 def train(label):
     df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
     clf = XGBClassifier(learning_rate=0.1,
-                        n_estimators=1000,
-                        max_depth=8,
-                        silent=True,
+                        n_estimators=1500,
+                        max_depth=4,
+                        silent=False,
+                        # scale_pos_weight=_toxic_count / _clean_count,
+                        colsample_bytree=0.8,
+                        colsample_bylevel=0.6,
+                        gamma=2,
                         objective='binary:logistic')
 
     '''feature composition'''
@@ -161,7 +165,11 @@ def train_cv(label):
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
     tfidf_char_train = train_tfidf_char_features()
-    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
+    word_embedding_train = pd.read_csv('../feature_engineering/word_embedding/w2v_train_embedding.csv',
+                                       encoding='utf-8')
+    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train,
+                             word_embedding_train)
+    # X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
     y_train = df_train['label']
 
     for idx_train, idx_valid in skf.split(y_train, y_train):
@@ -212,9 +220,13 @@ def _train(label, x_train, y_train, idx_train, idx_valid, index):
     """
     # df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
     clf = XGBClassifier(learning_rate=0.1,
-                        n_estimators=1000,
-                        max_depth=8,
-                        silent=True,
+                        n_estimators=1500,
+                        max_depth=4,
+                        silent=False,
+                        # scale_pos_weight=_toxic_count / _clean_count,
+                        colsample_bytree=0.8,
+                        colsample_bylevel=0.6,
+                        gamma=2,
                         objective='binary:logistic')
 
     # '''resample the data set'''

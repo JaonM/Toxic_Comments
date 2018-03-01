@@ -8,7 +8,7 @@ import gc
 
 EMBEDDING_SIZE = 100
 MAX_FEATURES = 30000  # number of unique words the rows of embedding matrix
-MAX_LEN=30
+MAX_LEN = 40
 
 df_train = pd.read_csv('../input/train_clean.csv', encoding='utf-8')
 df_test = pd.read_csv('../input/test_clean.csv', encoding='utf-8')
@@ -118,4 +118,5 @@ if __name__ == '__main__':
     train_embedding = get_train_embedding()
     train_embedding = pd.DataFrame(train_embedding)
     print('storing train embedding csv...')
-    train_embedding.to_csv('../feature_engineering/word_embedding/w2v_train_embedding.csv', index=False, encoding='utf-8')
+    train_embedding.to_csv('../feature_engineering/word_embedding/w2v_train_embedding.csv', index=False,
+                           encoding='utf-8')
