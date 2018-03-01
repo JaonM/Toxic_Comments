@@ -54,7 +54,7 @@ ngram_range = 2
 max_features = 30000
 max_len = 400
 batch_size = 64
-embedding_dim = 50
+embedding_dim = 100
 num_epoch = 100
 
 print('Loading data...')
@@ -113,12 +113,12 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
 
     model = Sequential()
     model.add(Embedding(max_features, embedding_dim, input_length=max_len, trainable=True))
-    # model.add(GlobalAveragePooling1D())
-    model.add(GlobalMaxPooling1D())
+    model.add(GlobalAveragePooling1D())
+    # model.add(GlobalMaxPooling1D())
     model.add(Dense(units=6, activation='sigmoid'))
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=10)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
     model_save_path = './fast_text_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
