@@ -132,6 +132,10 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
 
     merge = concatenate([global_avg, global_max])
 
+    output = Dense(6,activation='sigmoid')(merge)
+
+    model = Model(inputs=[input_avg,input_max],outputs=output)
+
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
     model_save_path = './fast_text_' + str(indice_fold) + '.h5'
