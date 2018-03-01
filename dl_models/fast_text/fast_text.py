@@ -57,7 +57,7 @@ num_epoch = 100
 
 print('Loading data...')
 df_train = pd.read_csv('../input/train_clean.csv', encoding='utf-8')
-df_test = pd.read_csv('../input/train_test.csv', encoding='utf-8')
+df_test = pd.read_csv('../input/test_clean.csv', encoding='utf-8')
 
 tokenizer = Tokenizer(num_words=max_features)
 tokenizer.fit_on_texts(pd.concat((df_train, df_test))['comment_text'].values)
@@ -99,6 +99,8 @@ num_split = 10
 print('Build {} fold cv Model...'.format(num_split))
 skf = StratifiedKFold(n_splits=10, shuffle=True)
 indice_fold = 0
+
+model_list = list()
 for idx_train, idx_val in skf.split(X_train, X_train):
     print('training {} fold', indice_fold)
     X_train = X_train[idx_train]
@@ -124,4 +126,16 @@ for idx_train, idx_val in skf.split(X_train, X_train):
               class_weight=class_weight,
               callbacks=[roc_auc_callback, early_stopping, model_check_point])
 
+    model_list.append(model)
+
     indice_fold += 1
+
+print('start predicting...')
+submission = pd.DataFrame()
+submission['id'] = df_test['id']
+for model in model_list:
+    preds = model.predict(X_test, batch_size=batch_size, verbose=1)
+    submission[labels] += preds.ravel()
+
+submission[labels] /= len(labels)
+submission.to_csv('../submission/fast_text_submit.csv', encoding='utf-8', index=False)
