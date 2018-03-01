@@ -27,9 +27,9 @@ def add_ngrams(sequences, token_indice, ngram_range=2):
     add ngram features to sequence(input list)
 
     Example: adding bi-gram
-    >>> sequences = [[1, 3, 4, 5], [1, 3, 7, 9, 2]]
-    >>> token_indice = {(1, 3): 1337, (9, 2): 42, (4, 5): 2017}
-    >>> add_ngram(sequences, token_indice, ngram_range=2)
+    # >>> sequences = [[1, 3, 4, 5], [1, 3, 7, 9, 2]]
+    # >>> token_indice = {(1, 3): 1337, (9, 2): 42, (4, 5): 2017}
+    # >>> add_ngram(sequences, token_indice, ngram_range=2)
     [[1, 3, 4, 5, 1337, 2017], [1, 3, 7, 9, 2, 1337, 42]]
     :param sequences:
     :param token_indice:
@@ -105,26 +105,26 @@ indice_fold = 0
 model_list = list()
 for idx_train, idx_val in kf.split(X=X_train, y=y_train):
     print('training {} fold'.format(indice_fold))
-    X_train = X_train[idx_train]
-    y_train = y_train[idx_train]
-    X_valid = X_train[idx_val]
-    y_valid = y_train[idx_val]
+    _X_train = X_train[idx_train]
+    _y_train = y_train[idx_train]
+    _X_valid = X_train[idx_val]
+    _y_valid = y_train[idx_val]
 
     model = Sequential()
     model.add(Embedding(max_features, embedding_dim, input_length=max_len))
     model.add(GlobalAveragePooling1D())
     model.add(Dense(units=6, activation='sigmoid'))
 
-    roc_auc_callback = RocCallback(X_train, y_train, X_valid, y_valid)
+    roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
     early_stopping = EarlyStopping(monitor='val_loss', patience=10)
     model_save_path = './fast_text_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    model.fit(X_train,
-              y_train,
+    model.fit(_X_train,
+              _y_train,
               batch_size=batch_size,
               epochs=num_epoch,
-              validation_data=(X_valid, y_valid),
+              validation_data=(_X_valid, _y_valid),
               class_weight=class_weight,
               callbacks=[roc_auc_callback, early_stopping, model_check_point])
 
