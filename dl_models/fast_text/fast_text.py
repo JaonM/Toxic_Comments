@@ -56,8 +56,8 @@ embedding_dim = 100
 num_epoch = 100
 
 print('Loading data...')
-df_train = pd.read_csv('../input/train_clean.csv', encoding='utf-8')
-df_test = pd.read_csv('../input/test_clean.csv', encoding='utf-8')
+df_train = pd.read_csv('../../input/train_clean.csv', encoding='utf-8')
+df_test = pd.read_csv('../../input/test_clean.csv', encoding='utf-8')
 
 tokenizer = Tokenizer(num_words=max_features)
 tokenizer.fit_on_texts(pd.concat((df_train, df_test))['comment_text'].values)
