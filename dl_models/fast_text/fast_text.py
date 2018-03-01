@@ -51,9 +51,9 @@ def add_ngrams(sequences, token_indice, ngram_range=2):
 # Set Parameters
 ngram_range = 2
 max_features = 30000
-max_len = 500
-batch_size = 128
-embedding_dim = 100
+max_len = 400
+batch_size = 64
+embedding_dim = 50
 num_epoch = 100
 
 print('Loading data...')
@@ -94,7 +94,7 @@ print('labels shape is', y_train.shape)
 print('constucting class weight map')
 class_weight = dict()
 for i in range(len(labels)):
-    class_weight[i] = len(df_train[df_train[labels[i]] == 1])
+    class_weight[i] = len(df_train)/len(df_train[df_train[labels[i]] == 1])
 
 num_split = 10
 print('Build {} fold cv Model...'.format(num_split))
@@ -111,7 +111,7 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
     _y_valid = y_train[idx_val]
 
     model = Sequential()
-    model.add(Embedding(max_features, embedding_dim, input_length=max_len))
+    model.add(Embedding(max_features, embedding_dim, input_length=max_len, trainable=True))
     model.add(GlobalAveragePooling1D())
     model.add(Dense(units=6, activation='sigmoid'))
 
