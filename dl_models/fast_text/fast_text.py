@@ -131,11 +131,14 @@ for idx_train, idx_val in skf.split(X_train, X_train):
     indice_fold += 1
 
 print('start predicting...')
-submission = pd.DataFrame()
-submission['id'] = df_test['id']
+submission = pd.DataFrame(data=np.zeros((len(df_test),len(labels))),columns=labels)
 for model in model_list:
     preds = model.predict(X_test, batch_size=batch_size, verbose=1)
-    submission[labels] += preds.ravel()
+    preds = pd.DataFrame(data=preds.ravel(),columns=labels)
+    print(preds)
+    submission += preds
 
-submission[labels] /= len(labels)
+submission /= len(labels)
+submission['id'] = df_test['id']
+
 submission.to_csv('../submission/fast_text_submit.csv', encoding='utf-8', index=False)
