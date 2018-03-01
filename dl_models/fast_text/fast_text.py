@@ -8,12 +8,15 @@ import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
+from keras.models import Model
+from keras.layers import Input
 # from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 from keras.layers import Embedding
 from keras.layers import GlobalAveragePooling1D
 from keras.layers import GlobalMaxPooling1D
 from keras.layers import Dense
+from keras.layers.merge import concatenate
 from dl_models.custom import RocCallback
 from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint
@@ -55,7 +58,7 @@ max_features = 30000
 max_len = 400
 batch_size = 64
 embedding_dim = 100
-num_epoch = 100
+num_epoch = 50
 
 print('Loading data...')
 df_train = pd.read_csv('../../input/train_clean.csv', encoding='utf-8')
@@ -95,7 +98,7 @@ print('labels shape is', y_train.shape)
 print('constucting class weight map')
 class_weight = dict()
 for i in range(len(labels)):
-    class_weight[i] = len(df_train)/len(df_train[df_train[labels[i]] == 1])
+    class_weight[i] = len(df_train) / len(df_train[df_train[labels[i]] == 1])
 
 num_split = 10
 print('Build {} fold cv Model...'.format(num_split))
@@ -116,6 +119,18 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
     model.add(GlobalAveragePooling1D())
     # model.add(GlobalMaxPooling1D())
     model.add(Dense(units=6, activation='sigmoid'))
+
+    embedding = Embedding(max_features, embedding_dim, input_length=max_len, trainable=True)
+    input_avg = Input(shape=(max_len,), dtype='int32')
+    input_max = Input(shape=(max_len,), dtype='int32')
+
+    avg_embedding = embedding(input_avg)
+    max_embedding = embedding(input_avg)
+
+    global_avg = GlobalAveragePooling1D()(avg_embedding)
+    global_max = GlobalMaxPooling1D()(max_embedding)
+
+    merge = concatenate([global_avg, global_max])
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
