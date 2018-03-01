@@ -8,7 +8,8 @@ import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
-from sklearn.model_selection import StratifiedKFold
+# from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import KFold
 from keras.layers import Embedding
 from keras.layers import GlobalAveragePooling1D
 from keras.layers import Dense
@@ -97,11 +98,12 @@ for i in range(len(labels)):
 
 num_split = 10
 print('Build {} fold cv Model...'.format(num_split))
-skf = StratifiedKFold(n_splits=10, shuffle=True)
+# skf = StratifiedKFold(n_splits=10, shuffle=True)
+kf = KFold(n_splits=num_split, shuffle=True, random_state=2)
 indice_fold = 0
 
 model_list = list()
-for idx_train, idx_val in skf.split(y_train, y_train):
+for idx_train, idx_val in kf.split(X_train):
     print('training {} fold', indice_fold)
     X_train = X_train[idx_train]
     y_train = y_train[idx_train]
@@ -131,10 +133,10 @@ for idx_train, idx_val in skf.split(y_train, y_train):
     indice_fold += 1
 
 print('start predicting...')
-submission = pd.DataFrame(data=np.zeros((len(df_test),len(labels))),columns=labels)
+submission = pd.DataFrame(data=np.zeros((len(df_test), len(labels))), columns=labels)
 for model in model_list:
     preds = model.predict(X_test, batch_size=batch_size, verbose=1)
-    preds = pd.DataFrame(data=preds.ravel(),columns=labels)
+    preds = pd.DataFrame(data=preds.ravel(), columns=labels)
     print(preds)
     submission += preds
 
