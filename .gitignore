@@ -113,3 +113,6 @@ lda.*
 # features
 feature_engineering/doc2vec/
 feature_engineering/word_embedding/
+
+# nn model files
+*.h5
