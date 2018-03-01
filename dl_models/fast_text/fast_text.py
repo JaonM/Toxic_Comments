@@ -88,7 +88,7 @@ print('X train shape is', X_train.shape)
 print('X test shape is', X_test.shape)
 
 labels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
-y_train = df_train[labels]
+y_train = df_train[labels].values
 print('labels shape is', y_train.shape)
 
 print('constucting class weight map')
@@ -103,8 +103,8 @@ kf = KFold(n_splits=num_split, shuffle=True, random_state=2)
 indice_fold = 0
 
 model_list = list()
-for idx_train, idx_val in kf.split(X_train):
-    print('training {} fold', indice_fold)
+for idx_train, idx_val in kf.split(X=X_train, y=y_train):
+    print('training {} fold'.format(indice_fold))
     X_train = X_train[idx_train]
     y_train = y_train[idx_train]
     X_valid = X_train[idx_val]
