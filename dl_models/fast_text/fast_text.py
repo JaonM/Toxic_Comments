@@ -12,6 +12,7 @@ from keras.models import Sequential
 from sklearn.model_selection import KFold
 from keras.layers import Embedding
 from keras.layers import GlobalAveragePooling1D
+from keras.layers import GlobalMaxPooling1D
 from keras.layers import Dense
 from dl_models.custom import RocCallback
 from keras.callbacks import EarlyStopping
@@ -112,7 +113,8 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
 
     model = Sequential()
     model.add(Embedding(max_features, embedding_dim, input_length=max_len, trainable=True))
-    model.add(GlobalAveragePooling1D())
+    # model.add(GlobalAveragePooling1D())
+    model.add(GlobalMaxPooling1D())
     model.add(Dense(units=6, activation='sigmoid'))
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
