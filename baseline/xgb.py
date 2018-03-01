@@ -114,7 +114,7 @@ def resample(X, y):
 def train(label):
     df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
     clf = XGBClassifier(learning_rate=0.1,
-                        n_estimators=1500,
+                        n_estimators=2000,
                         max_depth=4,
                         silent=False,
                         # scale_pos_weight=_toxic_count / _clean_count,
@@ -220,7 +220,7 @@ def _train(label, x_train, y_train, idx_train, idx_valid, index):
     """
     # df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
     clf = XGBClassifier(learning_rate=0.1,
-                        n_estimators=1500,
+                        n_estimators=2000,
                         max_depth=4,
                         silent=False,
                         # scale_pos_weight=_toxic_count / _clean_count,
