@@ -170,18 +170,19 @@ def train_cv(label):
     X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train,
                              word_embedding_train)
     # X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
-    y_train = df_train['label']
+    y_train = df_train[label]
 
     for idx_train, idx_valid in skf.split(y_train, y_train):
         print("fitting fold " + str(count))
         clf = _train(label,
-                     x_train=X_train[idx_train],
-                     y_train=y_train[idx_train],
+                     x_train=X_train,
+                     y_train=y_train,
                      idx_train=idx_train,
                      idx_valid=idx_valid,
                      index=count)
         count += 1
         clf_list.append(clf)
+    return clf_list
 
 
 def predict_cv(df_predict, label, classifier_list):
@@ -218,6 +219,7 @@ def _train(label, x_train, y_train, idx_train, idx_valid, index):
     :param index: number of training process
     :return: classifier
     """
+    print('start training process {}'.format(index))
     # df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
     clf = XGBClassifier(learning_rate=0.1,
                         n_estimators=2000,
@@ -234,7 +236,19 @@ def _train(label, x_train, y_train, idx_train, idx_valid, index):
 
     '''feature selection'''
     model = SelectFromModel(estimator=clf)
-    X_train = model.transform(x_train)
+    X_train = model.fit(x_train,
+                        y=y_train
+                        # learning_rate=0.1,
+                        # n_estimators=2000,
+                        # max_depth=4,
+                        # silent=False,
+                        # # scale_pos_weight=_toxic_count / _clean_count,
+                        # colsample_bytree=0.8,
+                        # colsample_bylevel=0.6,
+                        # gamma=2,
+                        # objective='binary:logistic'
+                        )
+    X_train = model.transform(X_train)
 
     '''train test split'''
     X_train = X_train[idx_train]
@@ -243,7 +257,7 @@ def _train(label, x_train, y_train, idx_train, idx_valid, index):
     y_valid = y_train[idx_valid]
     clf.fit(X_train, y_train, eval_metric='auc', eval_set=[(X_valid, y_valid)], early_stopping_rounds=20)
     y_predict = clf.predict(X_valid)
-    print('cv ' + str(count) + ' ' + label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
+    print('cv ' + str(index) + ' ' + label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
 
     # clf.fit(X_train_resampled, y_train_resampled)
     return clf
@@ -273,13 +287,13 @@ def predict(df_predict, clf, label):
 
 if __name__ == '__main__':
     '''predict and submit'''
-    # submission = pd.DataFrame()
-    # df_test = pd.read_csv('../input/test.csv', encoding='utf-8')
-    # submission['id'] = df_test['id']
-    # for label in labels:
-    #     clf = train(label)
-    #     submission = predict_cv(submission, clf, label)
-    # submission.to_csv('../submission/xgb_submission.csv', encoding='utf-8', index=False)
+    submission = pd.DataFrame()
+    df_test = pd.read_csv('../input/test.csv', encoding='utf-8')
+    submission['id'] = df_test['id']
+    for label in labels:
+        clfs = train_cv(label)
+        submission = predict_cv(submission,label,clfs)
+    submission.to_csv('../submission/xgb_submission.csv', encoding='utf-8', index=False)
 
     '''fine tune parameters'''
     grid_search = train_grid_search('toxic')
