@@ -20,6 +20,8 @@ from keras.layers.merge import concatenate
 from dl_models.custom import RocCallback
 from keras.callbacks import EarlyStopping
 from keras.callbacks import ModelCheckpoint
+from keras.layers.normalization import BatchNormalization
+from keras.layers import Dropout
 
 
 def create_ngrams_set(input_list, ngram_value=2):
@@ -56,7 +58,7 @@ def add_ngrams(sequences, token_indice, ngram_range=2):
 ngram_range = 1
 max_features = 30000
 max_len = 500
-batch_size = 64
+batch_size = 128
 embedding_dim = 50
 num_epoch = 50
 
@@ -91,6 +93,10 @@ X_test = pad_sequences(X_test, maxlen=max_len)
 print('X train shape is', X_train.shape)
 print('X test shape is', X_test.shape)
 
+print('create statics features')
+statics_train = pd.read_csv('../feature_engineering/statics/statics_train.csv', encoding='utf-8')
+statics_test = pd.read_csv('../feature_engineering/statics/statics_test.csv', encoding='utf-8')
+
 labels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
 y_train = df_train[labels].values
 print('labels shape is', y_train.shape)
@@ -110,8 +116,11 @@ model_list = list()
 for idx_train, idx_val in kf.split(X=X_train, y=y_train):
     print('training {} fold'.format(indice_fold))
     _X_train = X_train[idx_train]
+    statics_train = statics_train[idx_train]
     _y_train = y_train[idx_train]
+
     _X_valid = X_train[idx_val]
+    statics_valid = statics_train[idx_val]
     _y_valid = y_train[idx_val]
 
     # model = Sequential()
@@ -122,14 +131,18 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
 
     embedding = Embedding(max_features, embedding_dim, input_length=max_len, trainable=True)
     _input = Input(shape=(max_len,), dtype='int32')
-    # input = Input(shape=(max_len,), dtype='int32')
+
+    statics_input = Input(shape=(statics_train.shape[1],))
+    statics_normalization = BatchNormalization()(statics_input)
+    statics_dense = Dense(15, activation='relu')(statics_normalization)
+    statics_dense = Dropout(0.1)(statics_dense)
 
     input_embedding = embedding(_input)
 
     global_avg = GlobalAveragePooling1D()(input_embedding)
     global_max = GlobalMaxPooling1D()(input_embedding)
 
-    merge = concatenate([global_avg, global_max])
+    merge = concatenate([global_avg, global_max, statics_dense])
 
     output = Dense(6, activation='sigmoid')(merge)
 
@@ -140,7 +153,7 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
     model_save_path = './fast_text_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    model.fit(_X_train,
+    model.fit([_X_train, statics_train],
               _y_train,
               batch_size=batch_size,
               epochs=num_epoch,
@@ -155,13 +168,13 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
 print('start predicting...')
 submission = pd.DataFrame(data=np.zeros((len(df_test), len(labels))), columns=labels)
 for model in model_list:
-    preds = model.predict(X_test, batch_size=batch_size, verbose=1)
+    preds = model.predict([X_test, statics_test], batch_size=batch_size, verbose=1)
     print(preds.shape)
     preds = pd.DataFrame(data=preds, columns=labels)
     print(preds)
     submission += preds
 
-submission /= len(labels)
+submission /= len(model_list)
 submission['id'] = df_test['id']
 
 submission.to_csv('../submission/fast_text_submit.csv', encoding='utf-8', index=False)
