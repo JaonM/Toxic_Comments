@@ -53,11 +53,11 @@ def add_ngrams(sequences, token_indice, ngram_range=2):
 
 
 # Set Parameters
-ngram_range = 2
+ngram_range = 1
 max_features = 30000
-max_len = 400
+max_len = 500
 batch_size = 64
-embedding_dim = 100
+embedding_dim = 50
 num_epoch = 50
 
 print('Loading data...')
@@ -114,27 +114,26 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
     _X_valid = X_train[idx_val]
     _y_valid = y_train[idx_val]
 
-    model = Sequential()
-    model.add(Embedding(max_features, embedding_dim, input_length=max_len, trainable=True))
-    model.add(GlobalAveragePooling1D())
-    # model.add(GlobalMaxPooling1D())
-    model.add(Dense(units=6, activation='sigmoid'))
+    # model = Sequential()
+    # model.add(Embedding(max_features, embedding_dim, input_length=max_len, trainable=True))
+    # model.add(GlobalAveragePooling1D())
+    # # model.add(GlobalMaxPooling1D())
+    # model.add(Dense(units=6, activation='sigmoid'))
 
     embedding = Embedding(max_features, embedding_dim, input_length=max_len, trainable=True)
-    input_avg = Input(shape=(max_len,), dtype='int32')
-    input_max = Input(shape=(max_len,), dtype='int32')
+    _input = Input(shape=(max_len,), dtype='int32')
+    # input = Input(shape=(max_len,), dtype='int32')
 
-    avg_embedding = embedding(input_avg)
-    max_embedding = embedding(input_avg)
+    input_embedding = embedding(_input)
 
-    global_avg = GlobalAveragePooling1D()(avg_embedding)
-    global_max = GlobalMaxPooling1D()(max_embedding)
+    global_avg = GlobalAveragePooling1D()(input_embedding)
+    global_max = GlobalMaxPooling1D()(input_embedding)
 
     merge = concatenate([global_avg, global_max])
 
-    output = Dense(6,activation='sigmoid')(merge)
+    output = Dense(6, activation='sigmoid')(merge)
 
-    model = Model(inputs=[input_avg,input_max],outputs=output)
+    model = Model(inputs=_input, outputs=output)
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
@@ -157,7 +156,8 @@ print('start predicting...')
 submission = pd.DataFrame(data=np.zeros((len(df_test), len(labels))), columns=labels)
 for model in model_list:
     preds = model.predict(X_test, batch_size=batch_size, verbose=1)
-    preds = pd.DataFrame(data=preds.ravel(), columns=labels)
+    print(preds.shape)
+    preds = pd.DataFrame(data=preds, columns=labels)
     print(preds)
     submission += preds
 
