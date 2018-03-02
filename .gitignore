@@ -116,3 +116,6 @@ feature_engineering/word_embedding/
 
 # nn model files
 *.h5
+
+# submission files
+submission/

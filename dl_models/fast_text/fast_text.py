@@ -184,4 +184,4 @@ for model in model_list:
 submission /= len(model_list)
 submission['id'] = df_test['id']
 
-submission.to_csv('../../submission/fast_text_submit.csv', encoding='utf-8', index=False)
+submission.to_csv('../../submission/fast_text_submit-lb-0.9739.csv', encoding='utf-8', index=False)
