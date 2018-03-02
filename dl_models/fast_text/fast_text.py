@@ -94,14 +94,16 @@ print('X train shape is', X_train.shape)
 print('X test shape is', X_test.shape)
 
 print('create statics features')
-statics_train = pd.read_csv('../feature_engineering/statics/statics_train.csv', encoding='utf-8')
-statics_test = pd.read_csv('../feature_engineering/statics/statics_test.csv', encoding='utf-8')
+statics_train = pd.read_csv('../../feature_engineering/statics/statics_train.csv', encoding='utf-8').as_matrix()
+statics_test = pd.read_csv('../../feature_engineering/statics/statics_test.csv', encoding='utf-8').as_matrix()
+print(statics_train.shape)
+print(statics_test.shape)
 
 labels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
 y_train = df_train[labels].values
 print('labels shape is', y_train.shape)
 
-print('constucting class weight map')
+print('constructing class weight map')
 class_weight = dict()
 for i in range(len(labels)):
     class_weight[i] = len(df_train) / len(df_train[df_train[labels[i]] == 1])
@@ -116,11 +118,11 @@ model_list = list()
 for idx_train, idx_val in kf.split(X=X_train, y=y_train):
     print('training {} fold'.format(indice_fold))
     _X_train = X_train[idx_train]
-    statics_train = statics_train[idx_train]
+    # _statics_train = statics_train[idx_train]
     _y_train = y_train[idx_train]
 
     _X_valid = X_train[idx_val]
-    statics_valid = statics_train[idx_val]
+    # _statics_valid = statics_train[idx_val]
     _y_valid = y_train[idx_val]
 
     # model = Sequential()
@@ -132,17 +134,19 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
     embedding = Embedding(max_features, embedding_dim, input_length=max_len, trainable=True)
     _input = Input(shape=(max_len,), dtype='int32')
 
-    statics_input = Input(shape=(statics_train.shape[1],))
-    statics_normalization = BatchNormalization()(statics_input)
-    statics_dense = Dense(15, activation='relu')(statics_normalization)
-    statics_dense = Dropout(0.1)(statics_dense)
+    # statics_input = Input(shape=(statics_train.shape[1],))
+    # statics_normalization = BatchNormalization()(statics_input)
+    # statics_dense = Dense(10, activation='relu')(statics_normalization)
+    # statics_dense = Dropout(0.2)(statics_dense)
 
     input_embedding = embedding(_input)
 
     global_avg = GlobalAveragePooling1D()(input_embedding)
     global_max = GlobalMaxPooling1D()(input_embedding)
 
-    merge = concatenate([global_avg, global_max, statics_dense])
+    merge = concatenate([global_avg, global_max])
+    # merge = Dense(50, activation='relu')(merge)
+    # merge = Dropout(0.2)(merge)
 
     output = Dense(6, activation='sigmoid')(merge)
 
@@ -153,7 +157,7 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
     model_save_path = './fast_text_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    hist = model.fit([_X_train, statics_train],
+    hist = model.fit(_X_train,
                      _y_train,
                      batch_size=batch_size,
                      epochs=num_epoch,
@@ -171,7 +175,7 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
 print('start predicting...')
 submission = pd.DataFrame(data=np.zeros((len(df_test), len(labels))), columns=labels)
 for model in model_list:
-    preds = model.predict([X_test, statics_test], batch_size=batch_size, verbose=1)
+    preds = model.predict(X_test, batch_size=batch_size, verbose=1)
     print(preds.shape)
     preds = pd.DataFrame(data=preds, columns=labels)
     print(preds)
