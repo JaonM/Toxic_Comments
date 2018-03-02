@@ -111,8 +111,8 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     conv1_1 = Convolution1D(256, kernel_size=3, padding='same')(embedding_input)
     bn1_1 = BatchNormalization()(conv1_1)
     act1_1 = Activation(activation='relu')(bn1_1)
-    covn1_2 = Convolution1D(128, kernel_size=3, padding='same')(act1_1)
-    bn1_2 = BatchNormalization()(cnn1_2)
+    conv1_2 = Convolution1D(128, kernel_size=3, padding='same')(act1_1)
+    bn1_2 = BatchNormalization()(conv1_2)
     act1_2 = Activation('relu')(bn1_2)
     cnn1 = MaxPooling1D(pool_size=4)(act1_2)
 
@@ -120,8 +120,8 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     conv2_1 = Convolution1D(256, kernel_size=4, padding='same')(embedding_input)
     bn2_1 = BatchNormalization()(conv2_1)
     act2_1 = Activation(activation='relu')(bn2_1)
-    covn2_2 = Convolution1D(128, kernel_size=3, padding='same')(act2_1)
-    bn2_2 = BatchNormalization()(covn2_2)
+    conv2_2 = Convolution1D(128, kernel_size=3, padding='same')(act2_1)
+    bn2_2 = BatchNormalization()(conv2_2)
     act2_2 = Activation('relu')(bn2_2)
     cnn2 = MaxPooling1D(pool_size=4)(act2_2)
 
