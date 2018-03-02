@@ -153,13 +153,16 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
     model_save_path = './fast_text_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    model.fit([_X_train, statics_train],
-              _y_train,
-              batch_size=batch_size,
-              epochs=num_epoch,
-              validation_data=(_X_valid, _y_valid),
-              class_weight=class_weight,
-              callbacks=[roc_auc_callback, early_stopping, model_check_point])
+    hist = model.fit([_X_train, statics_train],
+                     _y_train,
+                     batch_size=batch_size,
+                     epochs=num_epoch,
+                     validation_data=(_X_valid, _y_valid),
+                     class_weight=class_weight,
+                     shuffle=True,
+                     callbacks=[roc_auc_callback, early_stopping, model_check_point])
+
+    print(indice_fold, "validation loss:", min(hist.history["val_loss"]))
 
     model_list.append(model)
 
