@@ -22,15 +22,15 @@ from keras.models import Model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from dl_models.custom import RocCallback
 
-EMBEDDING_FILE = '../input/glove.840B.300d.txt'
+EMBEDDING_FILE = '../../input/glove.840B.300d.txt'
 EMBEDDING_SIZE = 300
 MAX_FEATURES = 30000  # number of unique words the rows of embedding matrix
 MAX_LEN = 300  # max number of words in a comment to use
 BATCH_SIZE = 128
 num_epoch = 100
 
-df_train = pd.read_csv('../input/train_clean.csv', encoding='utf-8')
-df_test = pd.read_csv('../input/test_clean.csv', encoding='utf-8')
+df_train = pd.read_csv('../../input/train_clean.csv', encoding='utf-8')
+df_test = pd.read_csv('../../input/test_clean.csv', encoding='utf-8')
 
 tokenizer = Tokenizer(num_words=MAX_FEATURES)
 tokenizer.fit_on_texts(pd.concat((df_train, df_test))['comment_text'].values)
