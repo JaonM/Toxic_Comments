@@ -59,7 +59,7 @@ ngram_range = 1
 max_features = 30000
 max_len = 500
 batch_size = 128
-embedding_dim = 50
+embedding_dim = 100
 num_epoch = 50
 
 print('Loading data...')
@@ -106,7 +106,7 @@ print('labels shape is', y_train.shape)
 print('constructing class weight map')
 class_weight = dict()
 for i in range(len(labels)):
-    class_weight[i] = len(df_train) / len(df_train[df_train[labels[i]] == 1])
+    class_weight[i] = 1 / len(df_train[df_train[labels[i]] == 1])
 
 num_split = 10
 print('Build {} fold cv Model...'.format(num_split))
@@ -162,7 +162,7 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
                      batch_size=batch_size,
                      epochs=num_epoch,
                      validation_data=(_X_valid, _y_valid),
-                     class_weight=class_weight,
+                     # class_weight=class_weight,
                      shuffle=True,
                      callbacks=[roc_auc_callback, early_stopping, model_check_point])
 
@@ -184,4 +184,4 @@ for model in model_list:
 submission /= len(model_list)
 submission['id'] = df_test['id']
 
-submission.to_csv('../submission/fast_text_submit.csv', encoding='utf-8', index=False)
+submission.to_csv('../../submission/fast_text_submit.csv', encoding='utf-8', index=False)
