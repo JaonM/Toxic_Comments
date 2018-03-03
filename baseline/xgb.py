@@ -72,7 +72,8 @@ def train_grid_search(label):
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
     tfidf_char_train = train_tfidf_char_features()
-    word_embedding_train = pd.read_csv('../feature_engineering/word_embedding/w2v_train_embedding.csv', encoding='utf-8')
+    word_embedding_train = pd.read_csv('../feature_engineering/word_embedding/w2v_train_embedding.csv',
+                                       encoding='utf-8')
     # print(word_embedding_train.shape)
     X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train,
                              word_embedding_train)
@@ -234,30 +235,32 @@ def _train(label, x_train, y_train, idx_train, idx_valid, index):
     # '''resample the data set'''
     # X_train_resampled, y_train_resampled = resample(X_train, y_train)
 
+    clf.fit(x_train, y_train, eval_metric='auc')
+
     '''feature selection'''
-    model = SelectFromModel(estimator=clf)
-    X_train = model.fit(x_train,
-                        y=y_train
-                        # learning_rate=0.1,
-                        # n_estimators=2000,
-                        # max_depth=4,
-                        # silent=False,
-                        # # scale_pos_weight=_toxic_count / _clean_count,
-                        # colsample_bytree=0.8,
-                        # colsample_bylevel=0.6,
-                        # gamma=2,
-                        # objective='binary:logistic'
-                        )
-    X_train = model.transform(X_train)
+    model = SelectFromModel(estimator=clf,prefit=True)
+    # X_train = model.fit(x_train,
+    #                     y=y_train
+    #                     # learning_rate=0.1,
+    #                     # n_estimators=2000,
+    #                     # max_depth=4,
+    #                     # silent=False,
+    #                     # # scale_pos_weight=_toxic_count / _clean_count,
+    #                     # colsample_bytree=0.8,
+    #                     # colsample_bylevel=0.6,
+    #                     # gamma=2,
+    #                     # objective='binary:logistic'
+    #                     )
+    X_train = model.transform(x_train)
 
     '''train test split'''
-    X_train = X_train[idx_train]
-    y_train = y_train[idx_train]
-    X_valid = X_train[idx_valid]
-    y_valid = y_train[idx_valid]
-    clf.fit(X_train, y_train, eval_metric='auc', eval_set=[(X_valid, y_valid)], early_stopping_rounds=20)
-    y_predict = clf.predict(X_valid)
-    print('cv ' + str(index) + ' ' + label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
+    _X_train = X_train[idx_train]
+    _y_train = y_train[idx_train]
+    _X_valid = X_train[idx_valid]
+    _y_valid = y_train[idx_valid]
+    clf.fit(_X_train, _y_train, eval_metric='auc', eval_set=[(_X_valid, _y_valid)], early_stopping_rounds=20)
+    _y_predict = clf.predict(_X_valid)
+    print('cv ' + str(index) + ' ' + label + ' roc auc score is ' + str(roc_auc_score(_y_valid, _y_predict)))
 
     # clf.fit(X_train_resampled, y_train_resampled)
     return clf
@@ -292,7 +295,7 @@ if __name__ == '__main__':
     submission['id'] = df_test['id']
     for label in labels:
         clfs = train_cv(label)
-        submission = predict_cv(submission,label,clfs)
+        submission = predict_cv(submission, label, clfs)
     submission.to_csv('../submission/xgb_submission.csv', encoding='utf-8', index=False)
 
     '''fine tune parameters'''
