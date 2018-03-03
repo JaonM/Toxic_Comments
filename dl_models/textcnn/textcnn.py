@@ -28,8 +28,8 @@ import gc
 EMBEDDING_FILE = '../../input/glove.840B.300d.txt'
 EMBEDDING_SIZE = 300
 MAX_FEATURES = 30000  # number of unique words the rows of embedding matrix
-MAX_LEN = 200  # max number of words in a comment to use
-BATCH_SIZE = 64
+MAX_LEN = 300  # max number of words in a comment to use
+BATCH_SIZE = 128
 num_epoch = 100
 
 df_train = pd.read_csv('../../input/train_clean.csv', encoding='utf-8')
@@ -120,28 +120,28 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     embedding_input = embedding(_input)
 
     # cnn1 模块 kernal size=3
-    conv1_1 = Convolution1D(256, kernel_size=3, padding='same')(embedding_input)
+    conv1_1 = Convolution1D(256, kernel_size=3, padding='valid')(embedding_input)
     bn1_1 = BatchNormalization()(conv1_1)
     act1_1 = Activation(activation='relu')(bn1_1)
-    covn1_2 = Convolution1D(128, kernel_size=3, padding='same')(act1_1)
+    covn1_2 = Convolution1D(128, kernel_size=3, padding='valid')(act1_1)
     bn1_2 = BatchNormalization()(covn1_2)
     act1_2 = Activation('relu')(bn1_2)
     cnn1 = MaxPooling1D(pool_size=4)(act1_2)
 
     # cnn2 模块 kernal size=4
-    conv2_1 = Convolution1D(256, kernel_size=4, padding='same')(embedding_input)
+    conv2_1 = Convolution1D(256, kernel_size=4, padding='valid')(embedding_input)
     bn2_1 = BatchNormalization()(conv2_1)
     act2_1 = Activation(activation='relu')(bn2_1)
-    conv2_2 = Convolution1D(128, kernel_size=4, padding='same')(act2_1)
+    conv2_2 = Convolution1D(128, kernel_size=4, padding='valid')(act2_1)
     bn2_2 = BatchNormalization()(conv2_2)
     act2_2 = Activation('relu')(bn2_2)
     cnn2 = MaxPooling1D(pool_size=4)(act2_2)
 
     # cnn3 模块 kernal size=5
-    conv3_1 = Convolution1D(256, kernel_size=5, padding='same')(embedding_input)
+    conv3_1 = Convolution1D(256, kernel_size=5, padding='valid')(embedding_input)
     bn3_1 = BatchNormalization()(conv3_1)
     act3_1 = Activation(activation='relu')(bn3_1)
-    covn3_2 = Convolution1D(128, kernel_size=5, padding='same')(act3_1)
+    covn3_2 = Convolution1D(128, kernel_size=5, padding='valid')(act3_1)
     bn3_2 = BatchNormalization()(covn3_2)
     act3_2 = Activation('relu')(bn3_2)
     cnn3 = MaxPooling1D(pool_size=4)(act3_2)
@@ -149,8 +149,8 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     # concatenate
     merge = concatenate([cnn1, cnn2, cnn3])
     merge = Flatten()(merge)
-    merge = Dropout(0.5)(merge)
-    merge = Dense(64, activation='relu')(merge)  # linear layer
+    merge = Dropout(0.4)(merge)
+    merge = Dense(64)(merge)  # linear layer
     merge = BatchNormalization()(merge)
 
     out = Dense(6, activation='sigmoid')(merge)
@@ -161,7 +161,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     model_save_path = './models/text_cnn_static_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     tb_callback = TensorBoard('./logs', write_graph=True, write_images=True)
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer='nadam', metrics=['accuracy'])
     hist = model.fit(_X_train,
                      _y_train,
                      batch_size=BATCH_SIZE,
