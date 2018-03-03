@@ -106,6 +106,7 @@ class_weight = dict()
 for i in range(len(labels)):
     class_weight[i] = 1 / len(df_train[df_train[labels[i]] == 1])
 
+print('class_weight is', class_weight)
 indice_fold = 0
 # model_list = []
 for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
