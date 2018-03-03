@@ -157,7 +157,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
-    model_save_path = './text_cnn_' + str(indice_fold) + '.h5'
+    model_save_path = './models/text_cnn_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     tb_callback = TensorBoard('./logs', write_graph=True, write_images=True)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
