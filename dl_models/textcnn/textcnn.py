@@ -81,17 +81,18 @@ emb_mean, emb_std = all_embs.mean(), all_embs.std()
 
 word_index = tokenizer.word_index
 nb_words = len(word_index) + 1
+print('number of word is', nb_words)
 
 # nb_words = min(MAX_FEATURES, len(word_index))
 embedding_matrix = np.random.normal(emb_mean, emb_std, (nb_words, EMBEDDING_SIZE))
 for word, i in word_index.items():
-    if i >= MAX_FEATURES:
-        continue
+    # if i >= MAX_FEATURES:
+    #     continue
     embedding_vector = embedding_index.get(word)
     if embedding_vector is not None:
         embedding_matrix[i] = embedding_vector
 
-print('embedding shape is',embedding_matrix.shape)
+print('embedding shape is', embedding_matrix.shape)
 
 labels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
 y_train = df_train[labels].values
@@ -114,7 +115,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     _y_valid = y_train[idx_valid]
 
     _input = Input(shape=(MAX_LEN,))
-    embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN,weights=[embedding_matrix],trainable=False)
+    embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=False)
     embedding_input = embedding(_input)
 
     # cnn1 模块 kernal size=3
@@ -148,7 +149,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     merge = concatenate([cnn1, cnn2, cnn3])
     merge = Flatten()(merge)
     merge = Dropout(0.5)(merge)
-    merge = Dense(64,activation='relu')(merge)   # linear layer
+    merge = Dense(64, activation='relu')(merge)  # linear layer
     merge = BatchNormalization()(merge)
 
     out = Dense(6, activation='sigmoid')(merge)
@@ -158,7 +159,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
     model_save_path = './text_cnn_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
-    tb_callback = TensorBoard('./logs',write_graph=True,write_images=True)
+    tb_callback = TensorBoard('./logs', write_graph=True, write_images=True)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     hist = model.fit(_X_train,
                      _y_train,
@@ -167,17 +168,17 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
                      validation_data=(_X_valid, _y_valid),
                      class_weight=class_weight,
                      shuffle=True,
-                     callbacks=[roc_auc_callback, early_stopping, model_check_point,tb_callback])
+                     callbacks=[roc_auc_callback, early_stopping, model_check_point, tb_callback])
 
     print(indice_fold, "validation loss:", min(hist.history["val_loss"]))
 
     # model_list.append(model)
 
-    submission = pd.DataFrame(data=model.predict(X_test,batch_size=BATCH_SIZE,verbose=1),columns=labels)
-    submission.to_csv('./temp_submissions/temp_'+str(indice_fold)+'.csv',encoding='utf-8',index=False)
+    submission = pd.DataFrame(data=model.predict(X_test, batch_size=BATCH_SIZE, verbose=1), columns=labels)
+    submission.to_csv('./temp_submissions/temp_' + str(indice_fold) + '.csv', encoding='utf-8', index=False)
     K.clear_session()
 
-    del model,hist
+    del model, hist
     gc.collect()
     gc.collect()
 
@@ -187,7 +188,7 @@ print('start predicting...')
 submission = pd.DataFrame(data=np.zeros((len(df_test), len(labels))), columns=labels)
 for i in range(10):
     # preds = model.predict(X_test, batch_size=BATCH_SIZE, verbose=1)
-    temp = pd.read_csv('./temp_submissions/temp_'+str(i)+'.csv',encoding='utf-8')
+    temp = pd.read_csv('./temp_submissions/temp_' + str(i) + '.csv', encoding='utf-8')
     print(temp.shape)
     # preds = pd.DataFrame(data=preds, columns=labels)
     # print(preds)
