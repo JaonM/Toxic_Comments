@@ -24,6 +24,7 @@ from dl_models.custom import RocCallback
 from keras.callbacks import TensorBoard
 from keras import backend as K
 import gc
+import os
 
 EMBEDDING_FILE = '../../input/glove.840B.300d.txt'
 EMBEDDING_SIZE = 300
@@ -107,9 +108,23 @@ for i in range(len(labels)):
     class_weight[i] = 1 / len(df_train[df_train[labels[i]] == 1])
 
 indice_fold = 0
+
+
 # model_list = []
+
+def delete_files(file_folder='./logs'):
+    for the_file in os.listdir(file_folder):
+        file_path = os.path.join(file_folder, the_file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(e)
+
+
 for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     print('start training {} fold'.format(indice_fold))
+    delete_files()
     _X_train = X_train[idx_train]
     _y_train = y_train[idx_train]
     _X_valid = X_train[idx_valid]
@@ -149,8 +164,9 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     # concatenate
     merge = concatenate([cnn1, cnn2, cnn3])
     merge = Flatten()(merge)
-    merge = Dropout(0.4)(merge)
-    merge = Dense(64)(merge)  # linear layer
+    merge = Dropout(0.5)(merge)
+    merge = Dense(512,activation='relu')(merge)  # linear layer
+    merge = Dropout(0.2)(merge)
     merge = BatchNormalization()(merge)
 
     out = Dense(6, activation='sigmoid')(merge)
@@ -161,7 +177,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     model_save_path = './models/text_cnn_static_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     tb_callback = TensorBoard('./logs', write_graph=True, write_images=True)
-    model.compile(loss='binary_crossentropy', optimizer='nadam', metrics=['accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     hist = model.fit(_X_train,
                      _y_train,
                      batch_size=BATCH_SIZE,
