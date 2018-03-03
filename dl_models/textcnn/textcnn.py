@@ -120,28 +120,28 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     embedding_input = embedding(_input)
 
     # cnn1 模块 kernal size=3
-    conv1_1 = Convolution1D(256, kernel_size=3, padding='valid')(embedding_input)
+    conv1_1 = Convolution1D(256, kernel_size=3, padding='same')(embedding_input)
     bn1_1 = BatchNormalization()(conv1_1)
     act1_1 = Activation(activation='relu')(bn1_1)
-    covn1_2 = Convolution1D(128, kernel_size=3, padding='valid')(act1_1)
+    covn1_2 = Convolution1D(128, kernel_size=3, padding='same')(act1_1)
     bn1_2 = BatchNormalization()(covn1_2)
     act1_2 = Activation('relu')(bn1_2)
     cnn1 = MaxPooling1D(pool_size=4)(act1_2)
 
     # cnn2 模块 kernal size=4
-    conv2_1 = Convolution1D(256, kernel_size=4, padding='valid')(embedding_input)
+    conv2_1 = Convolution1D(256, kernel_size=4, padding='same')(embedding_input)
     bn2_1 = BatchNormalization()(conv2_1)
     act2_1 = Activation(activation='relu')(bn2_1)
-    conv2_2 = Convolution1D(128, kernel_size=4, padding='valid')(act2_1)
+    conv2_2 = Convolution1D(128, kernel_size=4, padding='same')(act2_1)
     bn2_2 = BatchNormalization()(conv2_2)
     act2_2 = Activation('relu')(bn2_2)
     cnn2 = MaxPooling1D(pool_size=4)(act2_2)
 
     # cnn3 模块 kernal size=5
-    conv3_1 = Convolution1D(256, kernel_size=5, padding='valid')(embedding_input)
+    conv3_1 = Convolution1D(256, kernel_size=5, padding='same')(embedding_input)
     bn3_1 = BatchNormalization()(conv3_1)
     act3_1 = Activation(activation='relu')(bn3_1)
-    covn3_2 = Convolution1D(128, kernel_size=5, padding='valid')(act3_1)
+    covn3_2 = Convolution1D(128, kernel_size=5, padding='same')(act3_1)
     bn3_2 = BatchNormalization()(covn3_2)
     act3_2 = Activation('relu')(bn3_2)
     cnn3 = MaxPooling1D(pool_size=4)(act3_2)
