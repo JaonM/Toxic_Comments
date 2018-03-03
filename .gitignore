@@ -119,3 +119,9 @@ feature_engineering/word_embedding/
 
 # submission files
 submission/
+
+# temp submissions
+temp_submissions/
+
+# tensorboard logs
+logs/
