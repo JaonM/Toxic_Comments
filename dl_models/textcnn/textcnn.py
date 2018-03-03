@@ -80,7 +80,9 @@ all_embs = np.stack(embedding_index.values())
 emb_mean, emb_std = all_embs.mean(), all_embs.std()
 
 word_index = tokenizer.word_index
-nb_words = min(MAX_FEATURES, len(word_index))
+nb_words = len(word_index) + 1
+
+# nb_words = min(MAX_FEATURES, len(word_index))
 embedding_matrix = np.random.normal(emb_mean, emb_std, (nb_words, EMBEDDING_SIZE))
 for word, i in word_index.items():
     if i >= MAX_FEATURES:
@@ -89,11 +91,11 @@ for word, i in word_index.items():
     if embedding_vector is not None:
         embedding_matrix[i] = embedding_vector
 
+print('embedding shape is',embedding_matrix.shape)
+
 labels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
 y_train = df_train[labels].values
 print('labels shape is', y_train.shape)
-
-nb_words = len(word_index) + 1
 
 kf = KFold(n_splits=10, shuffle=True, random_state=2)
 
