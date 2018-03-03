@@ -21,12 +21,15 @@ from keras.layers import Dense
 from keras.models import Model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from dl_models.custom import RocCallback
+from keras.callbacks import TensorBoard
+from keras import backend as K
+import gc
 
 EMBEDDING_FILE = '../../input/glove.840B.300d.txt'
 EMBEDDING_SIZE = 300
 MAX_FEATURES = 30000  # number of unique words the rows of embedding matrix
-MAX_LEN = 300  # max number of words in a comment to use
-BATCH_SIZE = 128
+MAX_LEN = 200  # max number of words in a comment to use
+BATCH_SIZE = 64
 num_epoch = 100
 
 df_train = pd.read_csv('../../input/train_clean.csv', encoding='utf-8')
@@ -94,8 +97,13 @@ nb_words = len(word_index) + 1
 
 kf = KFold(n_splits=10, shuffle=True, random_state=2)
 
+print('constructing class weight map')
+class_weight = dict()
+for i in range(len(labels)):
+    class_weight[i] = 1 / len(df_train[df_train[labels[i]] == 1])
+
 indice_fold = 0
-model_list = []
+# model_list = []
 for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     print('start training {} fold'.format(indice_fold))
     _X_train = X_train[idx_train]
@@ -104,7 +112,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     _y_valid = y_train[idx_valid]
 
     _input = Input(shape=(MAX_LEN,))
-    embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN)
+    embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN,weights=[embedding_matrix],trainable=False)
     embedding_input = embedding(_input)
 
     # cnn1 模块 kernal size=3
@@ -120,7 +128,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     conv2_1 = Convolution1D(256, kernel_size=4, padding='same')(embedding_input)
     bn2_1 = BatchNormalization()(conv2_1)
     act2_1 = Activation(activation='relu')(bn2_1)
-    conv2_2 = Convolution1D(128, kernel_size=3, padding='same')(act2_1)
+    conv2_2 = Convolution1D(128, kernel_size=4, padding='same')(act2_1)
     bn2_2 = BatchNormalization()(conv2_2)
     act2_2 = Activation('relu')(bn2_2)
     cnn2 = MaxPooling1D(pool_size=4)(act2_2)
@@ -129,7 +137,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     conv3_1 = Convolution1D(256, kernel_size=5, padding='same')(embedding_input)
     bn3_1 = BatchNormalization()(conv3_1)
     act3_1 = Activation(activation='relu')(bn3_1)
-    covn3_2 = Convolution1D(128, kernel_size=3, padding='same')(act3_1)
+    covn3_2 = Convolution1D(128, kernel_size=5, padding='same')(act3_1)
     bn3_2 = BatchNormalization()(covn3_2)
     act3_2 = Activation('relu')(bn3_2)
     cnn3 = MaxPooling1D(pool_size=4)(act3_2)
@@ -138,7 +146,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     merge = concatenate([cnn1, cnn2, cnn3])
     merge = Flatten()(merge)
     merge = Dropout(0.5)(merge)
-    merge = Dense(512)(merge)   # linear layer
+    merge = Dense(64,activation='relu')(merge)   # linear layer
     merge = BatchNormalization()(merge)
 
     out = Dense(6, activation='sigmoid')(merge)
@@ -148,32 +156,42 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
     model_save_path = './text_cnn_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
+    tb_callback = TensorBoard('./logs',write_graph=True,write_images=True)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     hist = model.fit(_X_train,
                      _y_train,
                      batch_size=BATCH_SIZE,
                      epochs=num_epoch,
                      validation_data=(_X_valid, _y_valid),
-                     # class_weight=class_weight,
+                     class_weight=class_weight,
                      shuffle=True,
-                     callbacks=[roc_auc_callback, early_stopping, model_check_point])
+                     callbacks=[roc_auc_callback, early_stopping, model_check_point,tb_callback])
 
     print(indice_fold, "validation loss:", min(hist.history["val_loss"]))
 
-    model_list.append(model)
+    # model_list.append(model)
+
+    submission = pd.DataFrame(data=model.predict(X_test,batch_size=BATCH_SIZE,verbose=1),columns=labels)
+    submission.to_csv('./temp_submissions/temp_'+str(indice_fold)+'.csv',encoding='utf-8',index=False)
+    K.clear_session()
+
+    del model,hist
+    gc.collect()
+    gc.collect()
 
     indice_fold += 1
 
 print('start predicting...')
 submission = pd.DataFrame(data=np.zeros((len(df_test), len(labels))), columns=labels)
-for model in model_list:
-    preds = model.predict(X_test, batch_size=BATCH_SIZE, verbose=1)
-    print(preds.shape)
-    preds = pd.DataFrame(data=preds, columns=labels)
-    print(preds)
-    submission += preds
+for i in range(10):
+    # preds = model.predict(X_test, batch_size=BATCH_SIZE, verbose=1)
+    temp = pd.read_csv('./temp_submissions/temp_'+str(i)+'.csv',encoding='utf-8')
+    print(temp.shape)
+    # preds = pd.DataFrame(data=preds, columns=labels)
+    # print(preds)
+    submission += temp
 
-submission /= len(model_list)
+submission /= 10
 submission['id'] = df_test['id']
 
-submission.to_csv('../../submission/fast_text_submit.csv', encoding='utf-8', index=False)
+submission.to_csv('../../submission/text_cnn_static_submit.csv', encoding='utf-8', index=False)

@@ -162,7 +162,7 @@ for idx_train, idx_val in kf.split(X=X_train, y=y_train):
                      batch_size=batch_size,
                      epochs=num_epoch,
                      validation_data=(_X_valid, _y_valid),
-                     # class_weight=class_weight,
+                     class_weight=class_weight,
                      shuffle=True,
                      callbacks=[roc_auc_callback, early_stopping, model_check_point])
 
@@ -184,4 +184,4 @@ for model in model_list:
 submission /= len(model_list)
 submission['id'] = df_test['id']
 
-submission.to_csv('../../submission/fast_text_submit-lb-0.9739.csv', encoding='utf-8', index=False)
+submission.to_csv('../../submission/fast_text_submit-lb-0.9773.csv', encoding='utf-8', index=False)
