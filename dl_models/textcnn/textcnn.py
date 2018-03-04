@@ -146,7 +146,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=True)
     embedding_input = embedding(_input)
 
-    # cnn1 模块 kernal size=2
+    # cnn1 模块 kernal size=1
     conv1_1 = Convolution1D(128, kernel_size=1, padding='causal', activation='relu')(embedding_input)
     bn1_1 = BatchNormalization()(conv1_1)
     covn1_2 = Convolution1D(64, kernel_size=1, padding='causal',activation='relu')(bn1_1)
@@ -159,7 +159,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     # bn1_a_2 = BatchNormalization()(covn1_a_2)
     # cnn1_a = AveragePooling1D(pool_size=4)(bn1_a_2)
 
-    # cnn2 模块 kernal size=3
+    # cnn2 模块 kernal size=2
     conv2_1 = Convolution1D(128, kernel_size=2, padding='causal', activation='relu')(embedding_input)
     bn2_1 = BatchNormalization()(conv2_1)
     conv2_2 = Convolution1D(64, kernel_size=2, padding='causal')(conv2_1)
@@ -172,7 +172,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     # bn2_a_2 = BatchNormalization()(conv2_a_2)
     # cnn2_a = AveragePooling1D(pool_size=4)(bn2_a_2)
 
-    # cnn3 模块 kernal size=4
+    # cnn3 模块 kernal size=3
     conv3_1 = Convolution1D(128, kernel_size=3, padding='causal', activation='relu')(embedding_input)
     bn3_1 = BatchNormalization()(conv3_1)
     conv3_2 = Convolution1D(64, kernel_size=3, padding='causal',activation='relu')(bn3_1)
