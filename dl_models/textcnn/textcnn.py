@@ -22,9 +22,11 @@ from keras.models import Model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from dl_models.custom import RocCallback
 from keras.callbacks import TensorBoard
+from keras.layers import AveragePooling1D
 from keras import backend as K
 import gc
 import os
+# from feature_engineering.w2v_extract import create_embedding
 
 EMBEDDING_FILE = '../../input/glove.840B.300d.txt'
 EMBEDDING_SIZE = 300
@@ -59,7 +61,6 @@ def get_coefs(line):
     return lines[0], np.asarray(lines[1:], dtype='float32')
 
 
-# embedding_index = dict(get_coefs(o.strip().split() for o in codecs.open(EMBEDDING_FILE, encoding='utf-8')))
 def create_embedding():
     embedding_index = dict()
     for o in codecs.open(EMBEDDING_FILE, encoding='utf-8'):
@@ -132,35 +133,54 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     _y_valid = y_train[idx_valid]
 
     _input = Input(shape=(MAX_LEN,))
-    embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=False)
+    embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=True)
     embedding_input = embedding(_input)
 
-    # cnn1 模块 kernal size=3
-    conv1_1 = Convolution1D(256, kernel_size=3, padding='same',activation='relu')(embedding_input)
+    # cnn1 模块 kernal size=2
+    conv1_1 = Convolution1D(128, kernel_size=2, padding='same', activation='relu')(embedding_input)
     bn1_1 = BatchNormalization()(conv1_1)
-    covn1_2 = Convolution1D(128, kernel_size=3, padding='same',activation='relu')(bn1_1)
+    covn1_2 = Convolution1D(64, kernel_size=2, padding='same',activation='relu')(bn1_1)
     bn1_2 = BatchNormalization()(covn1_2)
     cnn1 = MaxPooling1D(pool_size=4)(bn1_2)
 
-    # cnn2 模块 kernal size=4
-    conv2_1 = Convolution1D(256, kernel_size=4, padding='same',activation='relu')(embedding_input)
+    # conv1_a = Convolution1D(128, kernel_size=2, padding='same', activation='relu')(embedding_input)
+    # bn1_a_1 = BatchNormalization()(conv1_a)
+    # covn1_a_2 = Convolution1D(64, kernel_size=2, padding='same', activation='relu')(bn1_a_1)
+    # bn1_a_2 = BatchNormalization()(covn1_a_2)
+    # cnn1_a = AveragePooling1D(pool_size=4)(bn1_a_2)
+
+    # cnn2 模块 kernal size=3
+    conv2_1 = Convolution1D(128, kernel_size=3, padding='same', activation='relu')(embedding_input)
     bn2_1 = BatchNormalization()(conv2_1)
-    conv2_2 = Convolution1D(128, kernel_size=4, padding='same')(bn2_1)
+    conv2_2 = Convolution1D(64, kernel_size=3, padding='same')(conv2_1)
     bn2_2 = BatchNormalization()(conv2_2)
     cnn2 = MaxPooling1D(pool_size=4)(bn2_2)
 
-    # cnn3 模块 kernal size=5
-    conv3_1 = Convolution1D(256, kernel_size=5, padding='same',activation='relu')(embedding_input)
+    # conv2_a = Convolution1D(128, kernel_size=3, padding='same', activation='relu')(embedding_input)
+    # bn2_a_1 = BatchNormalization()(conv2_a)
+    # conv2_a_2 = Convolution1D(64, kernel_size=3, padding='same')(bn2_a_1)
+    # bn2_a_2 = BatchNormalization()(conv2_a_2)
+    # cnn2_a = AveragePooling1D(pool_size=4)(bn2_a_2)
+
+    # cnn3 模块 kernal size=4
+    conv3_1 = Convolution1D(128, kernel_size=4, padding='same', activation='relu')(embedding_input)
     bn3_1 = BatchNormalization()(conv3_1)
-    conv3_2 = Convolution1D(128, kernel_size=5, padding='same',activation='relu')(bn3_1)
+    conv3_2 = Convolution1D(64, kernel_size=4, padding='same',activation='relu')(bn3_1)
     bn3_2 = BatchNormalization()(conv3_2)
     cnn3 = MaxPooling1D(pool_size=4)(bn3_2)
+
+    # conv3_a = Convolution1D(128, kernel_size=4, padding='same', activation='relu')(embedding_input)
+    # bn3_a_1 = BatchNormalization()(conv3_a)
+    # conv3_a_2 = Convolution1D(64, kernel_size=4, padding='same', activation='relu')(bn3_a_1)
+    # bn3_a_2 = BatchNormalization()(conv3_a_2)
+    # cnn3_a = AveragePooling1D(pool_size=4)(bn3_a_2)
 
     # concatenate
     merge = concatenate([cnn1, cnn2, cnn3])
     merge = Flatten()(merge)
     merge = Dropout(0.5)(merge)
-    merge = Dense(512,activation='relu')(merge)  # linear layer
+    # merge = BatchNormalization()(merge)
+    merge = Dense(512, activation='relu')(merge)  # linear layer
     merge = Dropout(0.4)(merge)
     merge = BatchNormalization()(merge)
 
@@ -169,7 +189,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
     early_stopping = EarlyStopping(monitor='val_loss', patience=10)
-    model_save_path = './models/text_cnn_static_' + str(indice_fold) + '.h5'
+    model_save_path = './models/text_cnn_non_static_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     tb_callback = TensorBoard('./logs', write_graph=True, write_images=True)
     model.compile(loss='binary_crossentropy', optimizer='nadam', metrics=['accuracy'])
@@ -209,4 +229,4 @@ for i in range(10):
 submission /= 10
 submission['id'] = df_test['id']
 
-submission.to_csv('../../submission/text_cnn_static_submit.csv', encoding='utf-8', index=False)
+submission.to_csv('../../submission/text_cnn_non_static_submit.csv', encoding='utf-8', index=False)
