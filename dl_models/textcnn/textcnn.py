@@ -147,9 +147,9 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     embedding_input = embedding(_input)
 
     # cnn1 模块 kernal size=2
-    conv1_1 = Convolution1D(128, kernel_size=2, padding='causal', activation='relu')(embedding_input)
+    conv1_1 = Convolution1D(128, kernel_size=1, padding='causal', activation='relu')(embedding_input)
     bn1_1 = BatchNormalization()(conv1_1)
-    covn1_2 = Convolution1D(64, kernel_size=2, padding='causal',activation='relu')(bn1_1)
+    covn1_2 = Convolution1D(64, kernel_size=1, padding='causal',activation='relu')(bn1_1)
     bn1_2 = BatchNormalization()(covn1_2)
     cnn1 = MaxPooling1D(pool_size=4)(bn1_2)
 
@@ -160,9 +160,9 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     # cnn1_a = AveragePooling1D(pool_size=4)(bn1_a_2)
 
     # cnn2 模块 kernal size=3
-    conv2_1 = Convolution1D(128, kernel_size=3, padding='causal', activation='relu')(embedding_input)
+    conv2_1 = Convolution1D(128, kernel_size=2, padding='causal', activation='relu')(embedding_input)
     bn2_1 = BatchNormalization()(conv2_1)
-    conv2_2 = Convolution1D(64, kernel_size=3, padding='causal')(conv2_1)
+    conv2_2 = Convolution1D(64, kernel_size=2, padding='causal')(conv2_1)
     bn2_2 = BatchNormalization()(conv2_2)
     cnn2 = MaxPooling1D(pool_size=4)(bn2_2)
 
@@ -173,9 +173,9 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     # cnn2_a = AveragePooling1D(pool_size=4)(bn2_a_2)
 
     # cnn3 模块 kernal size=4
-    conv3_1 = Convolution1D(128, kernel_size=4, padding='causal', activation='relu')(embedding_input)
+    conv3_1 = Convolution1D(128, kernel_size=3, padding='causal', activation='relu')(embedding_input)
     bn3_1 = BatchNormalization()(conv3_1)
-    conv3_2 = Convolution1D(64, kernel_size=4, padding='causal',activation='relu')(bn3_1)
+    conv3_2 = Convolution1D(64, kernel_size=3, padding='causal',activation='relu')(bn3_1)
     bn3_2 = BatchNormalization()(conv3_2)
     cnn3 = MaxPooling1D(pool_size=4)(bn3_2)
 
@@ -198,7 +198,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     merge = BatchNormalization()(merge)
 
     out = Dense(6, activation='sigmoid')(merge)
-    model = Model(inputs=_input, outputs=out)
+    model = Model(inputs=[_input,_statics_input], outputs=out)
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
     early_stopping = EarlyStopping(monitor='val_loss', patience=10)
@@ -206,11 +206,11 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     tb_callback = TensorBoard('./logs', write_graph=True, write_images=True)
     model.compile(loss='binary_crossentropy', optimizer='nadam', metrics=['accuracy'])
-    hist = model.fit(_X_train,
+    hist = model.fit([_X_train,_statics_train],
                      _y_train,
                      batch_size=BATCH_SIZE,
                      epochs=num_epoch,
-                     validation_data=(_X_valid, _y_valid),
+                     validation_data=([_X_valid,_statics_train], _y_valid),
                      class_weight=class_weight,
                      shuffle=True,
                      callbacks=[roc_auc_callback, early_stopping, model_check_point, tb_callback])
@@ -219,7 +219,8 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
 
     # model_list.append(model)
 
-    submission = pd.DataFrame(data=model.predict(X_test, batch_size=BATCH_SIZE, verbose=1), columns=labels)
+    submission = pd.DataFrame(data=model.predict([X_test,statics_test], batch_size=BATCH_SIZE, verbose=1),
+                              columns=labels)
     submission.to_csv('./temp_submissions/temp_' + str(indice_fold) + '.csv', encoding='utf-8', index=False)
     K.clear_session()
 
