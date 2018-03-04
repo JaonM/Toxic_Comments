@@ -23,6 +23,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from dl_models.custom import RocCallback
 from keras.callbacks import TensorBoard
 from keras.layers import AveragePooling1D
+from keras.layers import GaussianNoise
 from keras import backend as K
 import gc
 import os
@@ -124,6 +125,10 @@ def delete_files(file_folder='./logs'):
             print(e)
 
 
+# statics hand-craft features
+statics_train = pd.read_csv('../feature_engineering/statics_train.csv',encoding='utf-8').as_matrix()
+statics_test = pd.read_csv('../feature_engineering/statics_test.csv',encoding='utf-8').as_matrix()
+
 for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     print('start training {} fold'.format(indice_fold))
     delete_files()
@@ -132,14 +137,19 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     _X_valid = X_train[idx_valid]
     _y_valid = y_train[idx_valid]
 
+    _statics_train = statics_train[idx_train]
+    _statics_valid = statics_train[idx_valid]
+
+    _statics_input = Input(shape=(statics_train.shape[1],))
+
     _input = Input(shape=(MAX_LEN,))
     embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=True)
     embedding_input = embedding(_input)
 
     # cnn1 模块 kernal size=2
-    conv1_1 = Convolution1D(128, kernel_size=2, padding='same', activation='relu')(embedding_input)
+    conv1_1 = Convolution1D(128, kernel_size=2, padding='causal', activation='relu')(embedding_input)
     bn1_1 = BatchNormalization()(conv1_1)
-    covn1_2 = Convolution1D(64, kernel_size=2, padding='same',activation='relu')(bn1_1)
+    covn1_2 = Convolution1D(64, kernel_size=2, padding='causal',activation='relu')(bn1_1)
     bn1_2 = BatchNormalization()(covn1_2)
     cnn1 = MaxPooling1D(pool_size=4)(bn1_2)
 
@@ -150,9 +160,9 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     # cnn1_a = AveragePooling1D(pool_size=4)(bn1_a_2)
 
     # cnn2 模块 kernal size=3
-    conv2_1 = Convolution1D(128, kernel_size=3, padding='same', activation='relu')(embedding_input)
+    conv2_1 = Convolution1D(128, kernel_size=3, padding='causal', activation='relu')(embedding_input)
     bn2_1 = BatchNormalization()(conv2_1)
-    conv2_2 = Convolution1D(64, kernel_size=3, padding='same')(conv2_1)
+    conv2_2 = Convolution1D(64, kernel_size=3, padding='causal')(conv2_1)
     bn2_2 = BatchNormalization()(conv2_2)
     cnn2 = MaxPooling1D(pool_size=4)(bn2_2)
 
@@ -163,9 +173,9 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     # cnn2_a = AveragePooling1D(pool_size=4)(bn2_a_2)
 
     # cnn3 模块 kernal size=4
-    conv3_1 = Convolution1D(128, kernel_size=4, padding='same', activation='relu')(embedding_input)
+    conv3_1 = Convolution1D(128, kernel_size=4, padding='causal', activation='relu')(embedding_input)
     bn3_1 = BatchNormalization()(conv3_1)
-    conv3_2 = Convolution1D(64, kernel_size=4, padding='same',activation='relu')(bn3_1)
+    conv3_2 = Convolution1D(64, kernel_size=4, padding='causal',activation='relu')(bn3_1)
     bn3_2 = BatchNormalization()(conv3_2)
     cnn3 = MaxPooling1D(pool_size=4)(bn3_2)
 
@@ -179,7 +189,10 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     merge = concatenate([cnn1, cnn2, cnn3])
     merge = Flatten()(merge)
     merge = Dropout(0.5)(merge)
-    # merge = BatchNormalization()(merge)
+
+    merge = concatenate([merge,_statics_input])
+    merge = BatchNormalization()(merge)
+    merge = GaussianNoise(0.1)(merge)
     merge = Dense(512, activation='relu')(merge)  # linear layer
     merge = Dropout(0.4)(merge)
     merge = BatchNormalization()(merge)

@@ -121,18 +121,18 @@ for idx_train, idx_valid in kf.split(X_train, y_train):
     _y_valid = y_train[idx_valid]
 
     model = Sequential()
-    model.add(Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=False))
-    model.add(Bidirectional(GRU(128, activation='relu', recurrent_dropout=0.1, return_sequences=True, dropout=0.2)))
+    model.add(Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=True))
+    # model.add(Bidirectional(GRU(128, activation='relu', recurrent_dropout=0.1, return_sequences=True, dropout=0.2)))
     model.add(Bidirectional(GRU(128, activation='relu', recurrent_dropout=0.1, dropout=0.2, return_sequences=True)))
     model.add(GlobalMaxPooling1D())
-    model.add(Dense(64, activation='relu'))
+    model.add(Dense(128, activation='relu'))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
     model.add(Dense(6, activation='sigmoid'))
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
-    model_save_path = './models/text_rnn_static_' + str(indice_fold) + '.h5'
+    model_save_path = './models/text_rnn_non_static_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     tb_callback = TensorBoard('./logs', write_graph=True, write_images=True)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -170,4 +170,4 @@ for i in range(10):
 submission /= 10
 submission['id'] = df_test['id']
 
-submission.to_csv('../../submission/text_rnn_static_submit.csv', encoding='utf-8', index=False)
+submission.to_csv('../../submission/text_rnn_non_static_submit.csv', encoding='utf-8', index=False)
