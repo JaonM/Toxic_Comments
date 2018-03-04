@@ -56,18 +56,19 @@ def train(label):
 
     '''feature composition'''
     df_handcraft_train = pd.read_csv('../input/train_features.csv', encoding='utf-8')[features].as_matrix()
-    tfidf_unigram_train = train_tfidf_unigram_features()
+    # tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
-    tfidf_char_train = train_tfidf_char_features()
-    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
+    # tfidf_char_train = train_tfidf_char_features()
+    # X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
+    X_train = features_merge(df_handcraft_train, tfidf_bigram_train)
     y_train = df_train['label']
 
     '''resample the data set'''
     X_train_resampled, y_train_resampled = resample(X_train, y_train)
 
-    '''feature selection'''
-    model = SelectFromModel(estimator=clf)
-    X_train_resampled = model.transform(X_train_resampled)
+    # '''feature selection'''
+    # model = SelectFromModel(estimator=clf)
+    # X_train_resampled = model.transform(X_train_resampled)
 
     '''train test split'''
     X_train, X_valid, y_train, y_valid = train_test_split(X_train_resampled, y_train_resampled, test_size=0.2,
@@ -91,11 +92,11 @@ def predict(df_predict, clf, label):
 
     '''feature composition'''
     df_handcraft_test = pd.read_csv('../input//test_features.csv', encoding='utf-8')[features]
-    tfidf_unigram_test = test_tfidf_unigram_features()
+    # tfidf_unigram_test = test_tfidf_unigram_features()
     tfidf_bigram_test = test_tfidf_bigram_features()
-    tfidf_char_test = test_tfidf_char_features()
-    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test, tfidf_char_test)
-
+    # tfidf_char_test = test_tfidf_char_features()
+    # X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test, tfidf_char_test)
+    X_test = features_merge(df_handcraft_test, tfidf_bigram_test)
     '''predict label'''
     target = clf.predict(X_test)
     df_predict[label] = target
@@ -113,4 +114,4 @@ if __name__ == '__main__':
     for label in labels:
         clf = train(label)
         df_predict = predict(df_predict, clf, label)
-    df_predict.to_csv('lr_submission', encoding='utf-8', index=False)
+    df_predict.to_csv('../submission/nb_submission.csv', encoding='utf-8', index=False)
