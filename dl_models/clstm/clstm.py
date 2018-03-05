@@ -29,6 +29,8 @@ from keras.layers import AveragePooling1D
 from keras.layers import GaussianNoise
 from keras.layers import GlobalMaxPooling1D
 from keras import backend as K
+from keras.models import Sequential
+from keras.layers import GRU
 import gc
 import os
 
@@ -144,9 +146,9 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
 
     # _statics_input = Input(shape=(statics_train.shape[1],))
 
-    _input = Input(shape=(MAX_LEN,))
-    embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=True)
-    embedding_input = embedding(_input)
+    # _input = Input(shape=(MAX_LEN,))
+    # embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=True)
+    # embedding_input = embedding(_input)
 
     # cnn1 模块 kernal size=1
     # conv1 = Convolution1D(128, kernel_size=1, padding='causal', activation='relu')(embedding_input)
@@ -155,21 +157,30 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     # conv2 = Convolution1D(128, kernel_size=2, padding='causal', activation='relu')(embedding_input)
 
     # cnn3 模块 kernal size=3
-    conv3 = Convolution1D(256, kernel_size=3, padding='valid', activation='relu')(embedding_input)
-    cnn = MaxPooling1D()(conv3)
+    # conv3 = Convolution1D(256, kernel_size=3, padding='valid', activation='relu')(embedding_input)
+    # cnn = MaxPooling1D()(conv3)
     # concatenate
     # cnns = concatenate([conv1, conv2, conv3])
 
     # lstm = Bidirectional(LSTM(128, activation='relu', recurrent_dropout=0.1, dropout=0.2,return_sequences=False))(conv3)
-    lstm = LSTM(128, activation='relu', recurrent_dropout=0.1)(conv3)
+    # lstm = LSTM(128, activation='relu', recurrent_dropout=0.1)(conv3)
     # global_pooling = GlobalMaxPooling1D()(lstm)
     # dense = BatchNormalization()(lstm)
-    dense = Dense(128, activation='relu')(lstm)
-    dense = Dropout(0.4)(dense)
-    dense = BatchNormalization()(dense)
-    out = Dense(6, activation='sigmoid')(dense)
+    # dense = Dense(128, activation='relu')(lstm)
+    # dense = Dropout(0.4)(dense)
+    # dense = BatchNormalization()(dense)
+    # out = Dense(6, activation='sigmoid')(dense)
 
-    model = Model(inputs=_input, outputs=out)
+    # model = Model(inputs=_input, outputs=out)
+
+    model = Sequential()
+    model.add(Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=True))
+    model.add(Convolution1D(256, 3, padding='same', strides=1))
+    model.add(Activation('relu'))
+    model.add(MaxPooling1D(pool_size=2))
+    model.add(GRU(256, dropout=0.2, recurrent_dropout=0.1, return_sequences=True))
+    model.add(GRU(256, dropout=0.2, recurrent_dropout=0.1))
+    model.add(Dense(6, activation='sigmoid'))
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
