@@ -148,25 +148,25 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     embedding_input = embedding(_input)
 
     # cnn1 模块 kernal size=1
-    conv1 = Convolution1D(128, kernel_size=1, padding='causal', activation='relu')(embedding_input)
-    cnn1 = MaxPooling1D()(conv1)
-    cnn1 = Flatten()(cnn1)
+    # conv1 = Convolution1D(128, kernel_size=1, padding='causal', activation='relu')(embedding_input)
+    # cnn1 = MaxPooling1D()(conv1)
+    # cnn1 = Flatten()(cnn1)
     # cnn2 模块 kernal size=2
-    conv2 = Convolution1D(128, kernel_size=2, padding='causal', activation='relu')(embedding_input)
-    cnn2 = MaxPooling1D()(conv2)
-    cnn2 = Flatten()(cnn2)
+    # conv2 = Convolution1D(128, kernel_size=2, padding='causal', activation='relu')(embedding_input)
+    # cnn2 = MaxPooling1D()(conv2)
+    # cnn2 = Flatten()(cnn2)
     # cnn3 模块 kernal size=3
-    conv3 = Convolution1D(128, kernel_size=3, padding='causal', activation='relu')(embedding_input)
+    conv3 = Convolution1D(128, kernel_size=3, padding='same', activation='relu')(embedding_input)
     cnn3 = MaxPooling1D()(conv3)
     cnn3 = Flatten()(cnn3)
 
     lstm = Bidirectional(LSTM(256, activation='relu', recurrent_dropout=0.1, dropout=0.2))(embedding_input)
 
     # concatenate
-    merge = concatenate([cnn1, cnn2, cnn3,lstm])
+    merge = concatenate([cnn3, lstm])
     # dense = BatchNormalization()(lstm)
-    dense = Dense(128, activation='relu')(lstm)
-    dense = Dropout(0.4)(dense)
+    # dense = Dense(128, activation='relu')(lstm)
+    dense = Dropout(0.4)(merge)
     dense = BatchNormalization()(dense)
     out = Dense(6, activation='sigmoid')(dense)
 
@@ -174,7 +174,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
-    model_save_path = './models/clstm_non_static_' + str(indice_fold) + '.h5'
+    model_save_path = './models/cnn_lstm_non_static_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     tb_callback = TensorBoard('./logs', write_graph=True, write_images=True)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])

@@ -180,6 +180,9 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     model.add(MaxPooling1D(pool_size=2))
     model.add(GRU(256, dropout=0.2, recurrent_dropout=0.1, return_sequences=True))
     model.add(GRU(256, dropout=0.2, recurrent_dropout=0.1))
+    # model.add(Dense(128,activation='relu'))
+    # model.add(Dropout(0.2))
+    # model.add(BatchNormalization())
     model.add(Dense(6, activation='sigmoid'))
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
@@ -221,4 +224,4 @@ for i in range(10):
 submission /= 10
 submission['id'] = df_test['id']
 
-submission.to_csv('../../submission/clstm_non_static_submit.csv', encoding='utf-8', index=False)
+submission.to_csv('../../submission/clstm_non_static_submit_lb.csv', encoding='utf-8', index=False)
