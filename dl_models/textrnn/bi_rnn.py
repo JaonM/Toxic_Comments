@@ -125,7 +125,7 @@ for idx_train, idx_valid in kf.split(X_train, y_train):
     # model.add(Bidirectional(GRU(128, activation='relu', recurrent_dropout=0.1, return_sequences=True, dropout=0.2)))
     model.add(Bidirectional(GRU(128, activation='relu', recurrent_dropout=0.1, dropout=0.2, return_sequences=True)))
     model.add(GlobalMaxPooling1D())
-    model.add(Dense(128, activation='relu'))
+    # model.add(Dense(128, activation='relu'))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
     model.add(Dense(6, activation='sigmoid'))
