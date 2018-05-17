@@ -89,11 +89,11 @@ def train(label):
 
     '''feature composition'''
     df_handcraft_train = pd.read_csv('../input/train_features.csv', encoding='utf-8')[features].as_matrix()
-    tfidf_unigram_train = train_tfidf_unigram_features()
+    # tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
-    tfidf_char_train = train_tfidf_char_features()
-    X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train,tfidf_char_train)
-    y_train = df_train['label']
+    # tfidf_char_train = train_tfidf_char_features()
+    X_train = features_merge(df_handcraft_train,  tfidf_bigram_train)
+    y_train = df_train[label]
 
     # '''resample the data set'''
     # X_train_resampled, y_train_resampled = resample(X_train, y_train)
@@ -102,12 +102,12 @@ def train(label):
     # model = SelectFromModel(estimator=clf)
     # X_train_resampled = model.transform(X_train_resampled)
 
-    '''train test split'''
-    X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.2,
-                                                          random_state=2)
-    clf.fit(X_train, y_train)
-    y_predict = clf.predict(X_valid)
-    print(label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
+    # '''train test split'''
+    # X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.2,
+    #                                                       random_state=2)
+    # clf.fit(X_train, y_train)
+    # y_predict = clf.predict(X_valid)
+    # print(label + ' roc auc score is ' + str(roc_auc_score(y_valid, y_predict)))
 
     clf.fit(X_train, y_train)
     return clf
@@ -124,10 +124,10 @@ def predict(df_predict, clf, label):
 
     '''feature composition'''
     df_handcraft_test = pd.read_csv('../input//test_features.csv', encoding='utf-8')[features]
-    tfidf_unigram_test = test_tfidf_unigram_features()
+    # tfidf_unigram_test = test_tfidf_unigram_features()
     tfidf_bigram_test = test_tfidf_bigram_features()
-    tfidf_char_test = test_tfidf_char_features()
-    X_test = features_merge(df_handcraft_test, tfidf_unigram_test, tfidf_bigram_test,tfidf_char_test)
+    # tfidf_char_test = test_tfidf_char_features()
+    X_test = features_merge(df_handcraft_test, tfidf_bigram_test)
 
     '''predict label'''
     target = clf.predict(X_test)
@@ -136,9 +136,9 @@ def predict(df_predict, clf, label):
 
 
 if __name__ == '__main__':
-    df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
-    grid_search = train_cv('toxic')
-    print(grid_search.best_params_)
+    # df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
+    # grid_search = train_cv('toxic')
+    # print(grid_search.best_params_)
 
     df_test = pd.read_csv('../input/test.csv', encoding='utf-8')
     df_predict = pd.DataFrame()
@@ -146,4 +146,4 @@ if __name__ == '__main__':
     for label in labels:
         clf = train(label)
         df_predict = predict(df_predict, clf, label)
-    df_predict.to_csv('lr_submission', encoding='utf-8', index=False)
+    df_predict.to_csv('../submission/rf_submission.csv', encoding='utf-8', index=False)

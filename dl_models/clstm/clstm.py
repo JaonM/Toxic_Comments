@@ -30,7 +30,7 @@ from keras.layers import GaussianNoise
 from keras.layers import GlobalMaxPooling1D
 from keras import backend as K
 from keras.models import Sequential
-from keras.layers import GRU
+from keras.layers import GRU8
 import gc
 import os
 

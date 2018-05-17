@@ -61,7 +61,7 @@ def train(label):
     # tfidf_char_train = train_tfidf_char_features()
     # X_train = features_merge(df_handcraft_train, tfidf_unigram_train, tfidf_bigram_train, tfidf_char_train)
     X_train = features_merge(df_handcraft_train, tfidf_bigram_train)
-    y_train = df_train['label']
+    y_train = df_train[label]
 
     '''resample the data set'''
     X_train_resampled, y_train_resampled = resample(X_train, y_train)
@@ -100,7 +100,7 @@ def predict(df_predict, clf, label):
     '''predict label'''
     target = clf.predict(X_test)
     df_predict[label] = target
-    return predict
+    return df_predict
 
 
 labels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
