@@ -93,9 +93,9 @@ X_test = pad_sequences(X_test, maxlen=max_len)
 print('X train shape is', X_train.shape)
 print('X test shape is', X_test.shape)
 
-print('create statics features')
-statics_train = pd.read_csv('../../feature_engineering/statics/statics_train.csv', encoding='utf-8').as_matrix()
-statics_test = pd.read_csv('../../feature_engineering/statics/statics_test.csv', encoding='utf-8').as_matrix()
+print('create statistics features')
+statics_train = pd.read_csv('../../feature_engineering/statistics/statics_train.csv', encoding='utf-8').as_matrix()
+statics_test = pd.read_csv('../../feature_engineering/statistics/statics_test.csv', encoding='utf-8').as_matrix()
 print(statics_train.shape)
 print(statics_test.shape)
 

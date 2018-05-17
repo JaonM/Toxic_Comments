@@ -126,9 +126,9 @@ def delete_files(file_folder='./logs'):
             print(e)
 
 
-# statics hand-craft features
-statics_train = pd.read_csv('../../feature_engineering/statics/statics_train.csv', encoding='utf-8').as_matrix()
-statics_test = pd.read_csv('../../feature_engineering/statics/statics_test.csv', encoding='utf-8').as_matrix()
+# statistics hand-craft features
+statics_train = pd.read_csv('../../feature_engineering/statistics/statics_train.csv', encoding='utf-8').as_matrix()
+statics_test = pd.read_csv('../../feature_engineering/statistics/statics_test.csv', encoding='utf-8').as_matrix()
 
 for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     print('start training {} fold'.format(indice_fold))
@@ -147,10 +147,10 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=True)
     embedding_input = embedding(_input)
 
-    # cnn1 模块 kernal size=1
-    conv1_1 = Convolution1D(64, kernel_size=1, padding='same', activation='relu')(embedding_input)
+    # cnn1 模块 kernal size=4
+    conv1_1 = Convolution1D(64, kernel_size=4, padding='same', activation='relu')(embedding_input)
     bn1_1 = BatchNormalization()(conv1_1)
-    covn1_2 = Convolution1D(128, kernel_size=1, padding='same', activation='relu')(bn1_1)
+    covn1_2 = Convolution1D(128, kernel_size=4, padding='same', activation='relu')(bn1_1)
     bn1_2 = BatchNormalization()(covn1_2)
     cnn1 = MaxPooling1D(pool_size=4)(bn1_2)
 
@@ -160,10 +160,10 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     # bn1_a_2 = BatchNormalization()(covn1_a_2)
     # cnn1_a = AveragePooling1D(pool_size=4)(bn1_a_2)
 
-    # cnn2 模块 kernal size=2
-    conv2_1 = Convolution1D(64, kernel_size=2, padding='same', activation='relu')(embedding_input)
+    # cnn2 模块 kernal size=5
+    conv2_1 = Convolution1D(64, kernel_size=5, padding='same', activation='relu')(embedding_input)
     bn2_1 = BatchNormalization()(conv2_1)
-    conv2_2 = Convolution1D(128, kernel_size=2, padding='same')(conv2_1)
+    conv2_2 = Convolution1D(128, kernel_size=5, padding='same')(conv2_1)
     bn2_2 = BatchNormalization()(conv2_2)
     cnn2 = MaxPooling1D(pool_size=4)(bn2_2)
 
@@ -174,9 +174,9 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     # cnn2_a = AveragePooling1D(pool_size=4)(bn2_a_2)
 
     # cnn3 模块 kernal size=3
-    conv3_1 = Convolution1D(64, kernel_size=3, padding='same', activation='relu')(embedding_input)
+    conv3_1 = Convolution1D(64, kernel_size=6, padding='same', activation='relu')(embedding_input)
     bn3_1 = BatchNormalization()(conv3_1)
-    conv3_2 = Convolution1D(128, kernel_size=3, padding='same', activation='relu')(bn3_1)
+    conv3_2 = Convolution1D(128, kernel_size=6, padding='same', activation='relu')(bn3_1)
     bn3_2 = BatchNormalization()(conv3_2)
     cnn3 = MaxPooling1D(pool_size=4)(bn3_2)
 
@@ -202,7 +202,7 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     model = Model(inputs=[_input, _statics_input], outputs=out)
 
     roc_auc_callback = RocCallback([_X_train,_statics_train], _y_train, [_X_valid,_statics_valid], _y_valid)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=10)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
     model_save_path = './models/text_cnn_non_static_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     tb_callback = TensorBoard('./logs', write_graph=True, write_images=True)

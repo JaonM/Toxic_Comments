@@ -125,7 +125,7 @@ for idx_train, idx_valid in kf.split(X_train, y_train):
     # model.add(Bidirectional(GRU(128, activation='relu', recurrent_dropout=0.1, return_sequences=True, dropout=0.2)))
     model.add(Bidirectional(GRU(128, activation='relu', recurrent_dropout=0.1, dropout=0.2, return_sequences=True)))
     model.add(GlobalMaxPooling1D())
-    model.add(Dense(128, activation='relu'))
+    # model.add(Dense(128, activation='relu'))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
     model.add(Dense(6, activation='sigmoid'))
@@ -170,4 +170,4 @@ for i in range(10):
 submission /= 10
 submission['id'] = df_test['id']
 
-submission.to_csv('../../submission/text_rnn_non_static_submit.csv', encoding='utf-8', index=False)
+submission.to_csv('../../submission/han_non_static_submit.csv', encoding='utf-8', index=False)

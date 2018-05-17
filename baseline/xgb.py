@@ -68,7 +68,7 @@ def train_grid_search(label):
                         objective='binary:logistic')
 
     # feature composition
-    df_handcraft_train = pd.read_csv('../feature_engineering/statics/statics_train.csv')
+    df_handcraft_train = pd.read_csv('../feature_engineering/statistics/statics_train.csv')
     tfidf_unigram_train = train_tfidf_unigram_features()
     tfidf_bigram_train = train_tfidf_bigram_features()
     tfidf_char_train = train_tfidf_char_features()
