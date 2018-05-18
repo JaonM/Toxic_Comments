@@ -1,11 +1,12 @@
 # -*- coding:utf-8 -*-
 
-import pandas as pd
 import re
+
+import pandas as pd
 from keras.preprocessing.text import text_to_word_sequence
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
-import math
+from textblob import TextBlob
 
 # Aphost lookup dict
 APPO = {
@@ -86,50 +87,40 @@ def clean(comment):
     comment = re.sub('\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}', '', comment)
 
     wordnetlem = WordNetLemmatizer()
-    words = text_to_word_sequence(comment)
+    words = text_to_word_sequence(comment, filters='"#$%&()*+,-./:;<=>@[\\]^_`{|}~\t\n')
     words = [APPO[word] if word in APPO else word for word in words]
     words = [word for word in words if word not in eng_stopwords]
+    words = [TextBlob(word).correct().string for word in words]
     words = [wordnetlem.lemmatize(word, 'v') for word in words]
     clean_comment = ' '.join(words)
     if len(clean_comment) > 0:
+        print(clean_comment)
         return clean_comment
     else:
         return 'unknown'
 
 
+def correct_translate(comment):
+    text = TextBlob(comment)
+    # lang = text.detect_language()
+    # print(lang)
+    # if lang != 'en':
+    #     try:
+    #         text = text.translate(from_lang=lang, to='en')
+    #     except:
+    #         pass
+    text = text.correct()
+    print(text.string)
+    return text.string
+
+
 # print(clean('[maqinag]sadsadA\nasdREE'))
 
 if __name__ == '__main__':
-    # df_train = pd.read_csv('../input/train.csv')
-    df_test = pd.read_csv('../input/test.csv')
-    # labels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
-    #
-    # df_train['comment_text'].fillna('unknown', inplace=True)
-    # df_test['comment_text'].fillna('unknown', inplace=True)
-    #
-    # df_clean_train = pd.DataFrame()
-    # df_clean_test = pd.DataFrame()
-    # df_clean_train['id'] = df_train['id']
-    # df_clean_test['id'] = df_test['id']
-    # df_clean_train['comment_text'] = df_train['comment_text'].apply(lambda x: clean(x))
-    # df_clean_test['comment_text'] = df_test['comment_text'].apply(lambda x: clean(x))
-    # df_clean_train[labels] = df_train[labels]
-    #
-    # df_clean_train.to_csv('../input/train_clean.csv', index=False, encoding='utf-8')
-    # df_clean_test.to_csv('../input/test_clean.csv', index=False, encoding='utf-8')
+    df_train = pd.read_csv('../input/train.csv', encoding='utf-8')
+    df_train['comment_text'].apply(lambda x: clean(x))
+    df_train.to_csv('../input/train_clean.csv', encoding='utf-8', index=False)
 
-    # df_clean_test = pd.read_csv('../input/clean_test.csv')
-    #
-
-    # for index, item in df_test.iterrows():
-    #     print(item['comment_text'])
-    #     item['comment_text'] = clean(item['comment_text'])
-    #     print(item['comment_text'])
-    # df_test.to_csv('../input/test_clean.csv', index=False, encoding='utf-8')
-
-    df_train_clean = pd.read_csv('../input/train_clean.csv', encoding='utf-8')
-    for index, item in df_train_clean.iterrows():
-        try:
-            comment = re.sub('\n', '', item['comment_text'])
-        except TypeError:
-            print(str(item['id']) + ' ' + str(item['comment_text']))
+    df_test = pd.read_csv('../input/test_clean.csv', encoding='utf-8')
+    df_test['comment_text'].apply(lambda x: clean(x))
+    df_test.to_csv('../input/test_clean.csv', encoding='utf-8', index=False)

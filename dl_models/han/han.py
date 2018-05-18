@@ -1,7 +1,6 @@
-# -*- coding:utf-8 -*-
+# -*-coding:utf-8-*-
 """
-convolution+lstm
-https://arxiv.org/pdf/1511.08630.pdf
+hierarchical attention network
 """
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -20,21 +19,17 @@ from keras.layers import Flatten
 from keras.layers import Dropout
 from keras.layers import Dense
 from keras.models import Model
+from keras.models import Sequential
+from keras.layers import Bidirectional
+from keras.layers import GRU
+from keras.layers import GlobalMaxPooling1D
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from dl_models.custom import RocCallback
 from keras.callbacks import TensorBoard
-from keras.layers import Bidirectional
-from keras.layers import LSTM
-from keras.layers import AveragePooling1D
-from keras.layers import GaussianNoise
-from keras.layers import GlobalMaxPooling1D
 from keras import backend as K
-from keras.models import Sequential
-from keras.layers import GRU
+from dl_models.custom import AttentionWithContext
 import gc
 import os
-
-# from feature_engineering.w2v_extract import create_embedding
 
 EMBEDDING_FILE = '../../input/glove.840B.300d.txt'
 EMBEDDING_SIZE = 300
@@ -47,7 +42,6 @@ df_train = pd.read_csv('../../input/train_clean.csv', encoding='utf-8')
 df_test = pd.read_csv('../../input/test_clean.csv', encoding='utf-8')
 
 tokenizer = Tokenizer(num_words=MAX_FEATURES)
-# tokenizer.fit_on_texts(pd.concat((df_train, df_test))['comment_text'].values)
 tokenizer.fit_on_texts(df_train['comment_text'].values)
 
 sequence_train = tokenizer.texts_to_sequences(df_train['comment_text'])
@@ -60,10 +54,6 @@ print('train data shape is', X_train.shape)
 print('test data shape is', X_test.shape)
 
 
-# def get_coefs(word, *arr):
-#     return word, np.asarray(arr, dtype='float32')
-
-
 def get_coefs(line):
     lines = line.strip().split()
     return lines[0], np.asarray(lines[1:], dtype='float32')
@@ -73,13 +63,8 @@ def create_embedding():
     embedding_index = dict()
     for o in codecs.open(EMBEDDING_FILE, encoding='utf-8'):
         try:
-            # word, vector = get_coefs(*o.strip().split())
             word, vector = get_coefs(o)
-            # vector = np.asarray(vector,dtype='float')
-            # print(word)
-            # print(vector)
             if len(vector) == 300:
-                # print(vector)
                 embedding_index[word] = vector
         except:
             continue
@@ -117,8 +102,6 @@ print('class_weight is', class_weight)
 indice_fold = 0
 
 
-# model_list = []
-
 def delete_files(file_folder='./logs'):
     for the_file in os.listdir(file_folder):
         file_path = os.path.join(file_folder, the_file)
@@ -129,65 +112,24 @@ def delete_files(file_folder='./logs'):
             print(e)
 
 
-# statistics hand-craft features
-# statics_train = pd.read_csv('../feature_engineering/statics_train.csv',encoding='utf-8').as_matrix()
-# statics_test = pd.read_csv('../feature_engineering/statics_test.csv',encoding='utf-8').as_matrix()
+for idx_train, idx_valid in kf.split(X_train, y_train):
+    print('start rnn training {} fold'.format(indice_fold))
 
-for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
-    print('start training {} fold'.format(indice_fold))
     delete_files()
     _X_train = X_train[idx_train]
     _y_train = y_train[idx_train]
     _X_valid = X_train[idx_valid]
     _y_valid = y_train[idx_valid]
 
-    # _statics_train = statics_train[idx_train]
-    # _statics_valid = statics_train[idx_valid]
-
-    # _statics_input = Input(shape=(statics_train.shape[1],))
-
-    # _input = Input(shape=(MAX_LEN,))
-    # embedding = Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=True)
-    # embedding_input = embedding(_input)
-
-    # cnn1 模块 kernal size=1
-    # conv1 = Convolution1D(128, kernel_size=1, padding='causal', activation='relu')(embedding_input)
-
-    # cnn2 模块 kernal size=2
-    # conv2 = Convolution1D(128, kernel_size=2, padding='causal', activation='relu')(embedding_input)
-
-    # cnn3 模块 kernal size=3
-    # conv3 = Convolution1D(256, kernel_size=3, padding='valid', activation='relu')(embedding_input)
-    # cnn = MaxPooling1D()(conv3)
-    # concatenate
-    # cnns = concatenate([conv1, conv2, conv3])
-
-    # lstm = Bidirectional(LSTM(128, activation='relu', recurrent_dropout=0.1, dropout=0.2,return_sequences=False))(conv3)
-    # lstm = LSTM(128, activation='relu', recurrent_dropout=0.1)(conv3)
-    # global_pooling = GlobalMaxPooling1D()(lstm)
-    # dense = BatchNormalization()(lstm)
-    # dense = Dense(128, activation='relu')(lstm)
-    # dense = Dropout(0.4)(dense)
-    # dense = BatchNormalization()(dense)
-    # out = Dense(6, activation='sigmoid')(dense)
-
-    # model = Model(inputs=_input, outputs=out)
-
     model = Sequential()
     model.add(Embedding(nb_words, EMBEDDING_SIZE, input_length=MAX_LEN, weights=[embedding_matrix], trainable=True))
-    model.add(Convolution1D(256, 3, padding='same', strides=1))
-    model.add(Activation('relu'))
-    model.add(MaxPooling1D(pool_size=2))
-    model.add(GRU(256, dropout=0.2, recurrent_dropout=0.1, return_sequences=True))
-    model.add(GRU(256, dropout=0.2, recurrent_dropout=0.1))
-    # model.add(Dense(128,activation='relu'))
-    # model.add(Dropout(0.2))
-    # model.add(BatchNormalization())
+    model.add(Bidirectional(GRU(128, activation='relu', recurrent_dropout=0.1, dropout=0.2, return_sequences=True)))
+    model.add(AttentionWithContext())
     model.add(Dense(6, activation='sigmoid'))
 
     roc_auc_callback = RocCallback(_X_train, _y_train, _X_valid, _y_valid)
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
-    model_save_path = './models/clstm_non_static_' + str(indice_fold) + '.h5'
+    model_save_path = './models/text_rnn_non_static_' + str(indice_fold) + '.h5'
     model_check_point = ModelCheckpoint(model_save_path, save_best_only=True, save_weights_only=True)
     tb_callback = TensorBoard('./logs', write_graph=True, write_images=True)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -202,10 +144,8 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
 
     print(indice_fold, "validation loss:", min(hist.history["val_loss"]))
 
-    # model_list.append(model)
-
     submission = pd.DataFrame(data=model.predict(X_test, batch_size=BATCH_SIZE, verbose=1), columns=labels)
-    submission.to_csv('./temp_submissions/clstm_temp_' + str(indice_fold) + '.csv', encoding='utf-8', index=False)
+    submission.to_csv('./temp_submissions/temp_' + str(indice_fold) + '.csv', encoding='utf-8', index=False)
     K.clear_session()
 
     del model, hist
@@ -217,11 +157,14 @@ for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
 print('start predicting...')
 submission = pd.DataFrame(data=np.zeros((len(df_test), len(labels))), columns=labels)
 for i in range(10):
-    temp = pd.read_csv('./temp_submissions/clstm_temp_' + str(i) + '.csv', encoding='utf-8')
+    # preds = model.predict(X_test, batch_size=BATCH_SIZE, verbose=1)
+    temp = pd.read_csv('./temp_submissions/temp_' + str(i) + '.csv', encoding='utf-8')
     print(temp.shape)
+    # preds = pd.DataFrame(data=preds, columns=labels)
+    # print(preds)
     submission += temp
 
 submission /= 10
 submission['id'] = df_test['id']
 
-submission.to_csv('../../submission/clstm_non_static_submit_lb.csv', encoding='utf-8', index=False)
+submission.to_csv('../../submission/han_non_static_submit.csv', encoding='utf-8', index=False)

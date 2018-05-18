@@ -170,4 +170,4 @@ for i in range(10):
 submission /= 10
 submission['id'] = df_test['id']
 
-submission.to_csv('../../submission/text_rnn_non_static_submit.csv', encoding='utf-8', index=False)
+submission.to_csv('../../submission/han_non_static_submit.csv', encoding='utf-8', index=False)

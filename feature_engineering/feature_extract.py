@@ -335,10 +335,10 @@ if __name__ == '__main__':
     # generate_topic_features(2)
 
     # statics_train = pd.read_csv('../input/train_features.csv').drop(labels='id', axis=1)
-    # statics_train.to_csv('../feature_engineering/statics/statics_train.csv', index=False, encoding='utf-8')
+    # statics_train.to_csv('../feature_engineering/statistics/statics_train.csv', index=False, encoding='utf-8')
 
     # statics_test = pd.read_csv('../input/test_features.csv').drop(labels='id', axis=1)
-    # statics_test.to_csv('../feature_engineering/statics/statics_test.csv', index=False, encoding='utf-8')
+    # statics_test.to_csv('../feature_engineering/statistics/statics_test.csv', index=False, encoding='utf-8')
 
     tfidf_unigram_train = pd.DataFrame(data=train_tfidf_unigram_features().todense())
     print(len(tfidf_unigram_train))

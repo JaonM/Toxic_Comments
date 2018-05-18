@@ -126,9 +126,9 @@ def delete_files(file_folder='./logs'):
             print(e)
 
 
-# statics hand-craft features
-statics_train = pd.read_csv('../../feature_engineering/statics/statics_train.csv', encoding='utf-8').as_matrix()
-statics_test = pd.read_csv('../../feature_engineering/statics/statics_test.csv', encoding='utf-8').as_matrix()
+# statistics hand-craft features
+statics_train = pd.read_csv('../../feature_engineering/statistics/statics_train.csv', encoding='utf-8').as_matrix()
+statics_test = pd.read_csv('../../feature_engineering/statistics/statics_test.csv', encoding='utf-8').as_matrix()
 
 for idx_train, idx_valid in kf.split(X=X_train, y=y_train):
     print('start training {} fold'.format(indice_fold))
